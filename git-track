@@ -1,0 +1,149 @@
+#!/usr/bin/env perl
+
+# Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
+# License under WTFPL (http://www.wtfpl.net/txt/copying/)
+
+# git-track: Track lifetime changes (including renames) of a file
+# throughout the complete history of a Git repository
+use 5.008;
+use strict;
+use warnings;
+use File::Basename qw(basename);
+
+# verify we're in a Git repository before anything else
+if (system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") != 0) {
+	die "Could not locate the Git repository. Please verify you're inside a directory under Git version control";
+}
+
+# store copy of `@ARGV` that we can freely manipulate
+my @argv = @ARGV;
+
+# store the last argument (which should be
+# the filename the user is trying to track)
+# and remove it from `@argv` array
+my $filename = pop @argv;
+
+# store length of `@argv` (after pop)
+my $argc = @argv;
+
+# base components of `git log` shell command, represented
+# as an array to make it easier to pass to `system` builtin
+my @git_log = (
+	"git",
+	"log"
+);
+
+# default format to use for `git log --format` flag option
+my $git_log_default_format = "%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n";
+
+# optionally set default view for diffs
+# shown in `git log` (defaults to inline)
+my $git_log_default_diff = "--side-by-side";
+
+# applicable `git log` flag options
+my @git_log_flags = (
+	"--follow",
+	"--format='$git_log_default_format'",
+	"--graph",
+	"--no-merges",
+	"--patch-with-stat"
+);
+
+# map `git track` flags to actual `git log`
+# flags that can be passed along to the shell
+my %git_track_map_flags = (
+	"--last"         => "--max-count",
+	"--oldest"       => "--reverse",
+	"--side-by-side" => "--color-words"
+);
+
+# `git track` flag options that have a mapping
+# to an actual `git log` flag option
+my @git_track_flags = keys %git_track_map_flags;
+
+# `git track` flag option aliases that can be
+# used as shorthand flag options instead
+my %git_track_map_aliases = (
+	"-l" => $git_track_map_flags{"--last"},
+	"-s" => $git_track_map_flags{"--side-by-side"}
+);
+
+# `git track` flag options that have a valid
+# shorthand flag option that can be substituted
+my @git_track_aliases = keys %git_track_map_aliases;
+
+# outer scoped reference will hold the final result
+# we'll pass to the shell, once flags are processed
+my @result = undef;
+
+# get the correct `git track` flag option from what
+# was given (longhand or shorthand) as an argument
+# and return what the flag maps to in `git log` terms
+sub get_flag {
+	my $flag = shift;
+	if (grep { $flag eq $_ } @git_track_flags) {
+		return $git_track_map_flags{$flag};
+	} elsif (grep { $flag eq $_ } @git_track_aliases) {
+		return $git_track_map_aliases{$flag};
+	} else {
+		return undef;
+	}
+}
+
+# get flag mappings and put them into a nice array
+sub get_flags {
+	my @flags = @_;
+	my @options = ();
+	foreach my $option (@flags) {
+		print "$option\n";
+		if (!get_flag $option) {
+			die "Invalid flag option\nUsage: git track {-f[--first]|-F[--func]|-l[--last]|-L[--lines]|-o[--oldest]} filename";
+		}
+		push @options, $option;
+	}
+	return @options;
+}
+
+# get implicit default flag option value
+sub get_flag_default_value {
+	my $value = shift;
+}
+
+# execute `git track` in the shell
+sub git_track {
+	my @command = shift;
+	my $return  = shift;
+	system @command;
+	# if explicitly told to, return the
+	# exit status from the `system` call
+	if (defined $return) {
+		return $?;
+	}
+	# otherwise, exit the script
+	exit;
+}
+
+# verify `$filename` is a valid file before
+# we start processing any additional input
+if (! -e $filename) {
+	die "Could not locate file '$filename'. Please verify the file exists and the path is valid";
+}
+
+# set the default diff view if `$git_log_default_diff`
+# is defined in scope and contains a valid argument
+if (defined $git_log_default_diff) {
+	# get the correct flag option based on the flag given
+	my $diff_view = get_flag $git_log_default_diff;
+	unshift @git_log_flags, $diff_view if defined $diff_view;
+}
+
+# if `$argc` is 0 (meaning only a filename was given)
+# execute with default flags only and exit the script
+if (!$argc) {
+	@result = join ' ', @git_log, @git_log_flags, $filename;
+	git_track @result;
+}
+
+# otherwise, get the mapped flags we'll pass to `git log`
+my @flags = get_flags @argv;
+print "@flags\n";
