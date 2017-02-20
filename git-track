@@ -9,7 +9,6 @@ use 5.008;
 use strict;
 use warnings;
 use File::Basename qw(basename);
-use Data::Dumper qw(Dumper);
 
 # verify we're in a Git repository before anything else
 if (system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") != 0) {
