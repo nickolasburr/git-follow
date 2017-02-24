@@ -14,7 +14,7 @@ Options can be specified to provide specific commit information via the use of f
 
 ### Environment Variables
 
-You can change the default diff style to display patches as `inline` or `side-by-side`. The default value is `side-by-side` (`--color-words`).
+You can change the diff style to display patches as `inline` or `side-by-side`. The default is `side-by-side` ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)).
 
 To change the diff style to `inline`, set `$git_log_diff` to `undef`.
 
@@ -32,19 +32,19 @@ git track --first composer.json
 git track --last 5 composer.json
 ```
 
-**Display the last commit where lines 5 to EOF where affected**
+**Display the last commit where lines 5 to EOF were affected**
 
 ```shell
 git track --last --lines 5 composer.json
 ```
 
-**Display the last 3 commits where lines 10 through 15 where affected**
+**Display the last 3 commits where lines 10 through 15 were affected**
 
 ```shell
 git track --last 3 --lines 10 15 composer.json
 ```
 
-**Display all applicable commits where function `funcname` was affected**
+**Display all commits where function `funcname` was affected**
 
 ```shell
 git track --func funcname filename.c
