@@ -41,15 +41,15 @@ my %flags;
 
 # optionally set default view for diffs
 # shown in `git log` (defaults to inline)
-my $git_log_default_diff = "side-by-side";
+my $git_log_diff = "--color-words";
 
 # default format to use for `git log --format` flag option
-my $git_log_default_format = "%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n";
+my $git_log_format = "%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n";
 
 # default `git log` flag options
 my @git_log_flags = (
 	"--follow",
-	"--format='$git_log_default_format'",
+	"--format='$git_log_format'",
 	"--graph",
 	"--no-merges",
 	"--patch-with-stat"
@@ -150,6 +150,7 @@ sub git_track {
 		my $rflag = &get_format_rflag($flag, $args);
 		push @command, $rflag;
 	}
+	unshift @git_log_flags, $git_log_diff if defined $git_log_diff;
 	unshift @command, @git_log, @git_log_flags;
 	push @command, '--', $filename;
 	system @command;
