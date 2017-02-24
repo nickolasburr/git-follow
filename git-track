@@ -120,7 +120,7 @@ sub get_format_rflag {
 	# the function name we're passing to `git log`
 	} elsif ($flag eq "func") {
 		my $funcname = shift @args;
-		return "-L ^:$funcname:$filename";
+		return "-L\^\:$funcname\:$filename";
 	} elsif ($flag eq "last") {
 		my $num = shift @args;
 		if (!$num) {
