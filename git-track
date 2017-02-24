@@ -6,41 +6,47 @@
 # git-track: Track lifetime changes (including renames) of a file
 # throughout the complete history of a Git repository
 use 5.008;
+use Getopt::Long;
+use Data::Dumper;
 use strict;
 use warnings;
-use File::Basename qw(basename);
 
-# verify we're in a Git repository before anything else
-if (system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") != 0) {
-	die "Could not locate the Git repository. Please verify you're inside a directory under Git version control";
-}
+# specific user error type messages
+my $repo_not_found_error   = "Not a Git repository, exiting the script";
+my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
+my $invalid_usage_error    = "Usage: git track [[--first|-f] | [--func|-F] | [--last|-l] | [--lines|-L] | [--reverse|-r]] filename";
 
-# store copy of `@ARGV` that we can freely manipulate
-my @argv = @ARGV;
+# store length of `@ARGV`
+my $argc = @ARGV;
+
+# if `system` returns a non-zero exit status, meaning the
+# current directory is not a Git repository, kill the script
+!system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") or die "$repo_not_found_error";
+
+# if no arguments were given, emit an error and kill the script
+$argc or die "$invalid_usage_error";
 
 # store the last argument (which should be
 # the filename the user is trying to track)
-# and remove it from `@argv` array
-my $filename = pop @argv;
+# and remove it from `@ARGV` array
+my $filename = pop @ARGV;
 
-# store length of `@argv` (after pop)
-my $argc = @argv;
+# verify `$filename` is a valid pathspec
+if (! -e $filename) {
+	die "$invalid_pathspec_error";
+}
 
-# base components of `git log` shell command, represented
-# as an array to make it easier to pass to `system` builtin
-my @git_log = (
-	"git",
-	"log"
-);
+# flag options passed to the script
+my %flags;
+
+# optionally set default view for diffs
+# shown in `git log` (defaults to inline)
+my $git_log_default_diff = "side-by-side";
 
 # default format to use for `git log --format` flag option
 my $git_log_default_format = "%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n";
 
-# optionally set default view for diffs
-# shown in `git log` (defaults to inline)
-my $git_log_default_diff = "--side-by-side";
-
-# applicable `git log` flag options
+# default `git log` flag options
 my @git_log_flags = (
 	"--follow",
 	"--format='$git_log_default_format'",
@@ -49,252 +55,105 @@ my @git_log_flags = (
 	"--patch-with-stat"
 );
 
-# default error message to pass to `die` builtin
-# when an invalid flag is passed to the script
-my $git_track_default_error_message = "Invalid flag given\nUsage: git track {-f[--first]|-F[--func]|-l[--last]|-L[--lines]|-r[--reverse]} filename";
-
-# custom error message to pass to `die` builtin
-# when two or more mutually-exclusive flags
-# are given as arguments to the script
-my $git_track_mutins_error_message = "Illegal flag combination\nUsage: git track {-f[--first]|-F[--func]|-l[--last]|-L[--lines]|-r[--reverse]} filename";
-
-# map `git track` flags to actual `git log`
-# flags that can be passed along to the shell
-my %git_track_map_flags = (
-	"--first"        => "--diff-filter",
-	"--func"         => "-L",
-	"--last"         => "--max-count",
-	"--lines"        => "-L",
-	"--reverse"      => "--reverse",
-	"--side-by-side" => "--color-words"
+# default argument values for flag options
+my %dargs = (
+	"first" => "A",
+	"last"  => 1,
+	"lines" => 1
 );
 
-# `git track` flag options that have a mapping
-# to an actual `git log` flag option
-my @git_track_flags = keys %git_track_map_flags;
-
-# `git track` flag option aliases that can be
-# used as shorthand flag options instead
-my %git_track_map_aliases = (
-	"-f" => "--first",
-	"-F" => "--func",
-	"-l" => "--last",
-	"-L" => "--lines",
-	"-s" => "--side-by-side",
-	"-r" => "--reverse"
-);
-
-# `git track` flag options that have a valid
-# shorthand flag option that can be substituted
-my @git_track_aliases = keys %git_track_map_aliases;
-
-# `git track` mutually-inclusive flag options
-my %git_track_flag_mutins = (
-	"--first"        => [
-		"--func",
-		"--lines",
-		"--side-by-side"
-	],
-	"--func"         => [
-		"--first",
-		"--last",
-		"--side-by-side",
-		"--reverse"
-	],
-	"--last"         => [
-		"--func",
-		"--lines",
-		"--side-by-side"
-	],
-	"--lines"        => [
-		"--first",
-		"--last",
-		"--reverse",
-		"--side-by-side"
-	],
-	"--reverse"      => [
-		"--func",
-		"--lines",
-		"--side-by-side"
-	],
-	"--side-by-side" => [
-		"--first",
-		"--func",
-		"--last",
-		"--lines",
-		"--reverse"
-	]
-);
-
-my @git_track_mutins = keys %git_track_flag_mutins;
-
-# determine if a flag has conflicts with other flags
-# that were passed earlier in the cycle
-sub has_conflicts {
-	my @flags  = @_;
-	my $nindex = 1;
-	# iterate over flags given as arguments to the
-	# script that we need to check for conflicts
-	foreach my $flag (@flags) {
-		# the next flag in the array of arguments
-		my $nflag = $flags[$nindex];
-		# if `$nflag` is undefined (we've reached the end
-		# of the array of arguments), return status code 0,
-		# as we can safely assume there weren't conflicts
-		if (!defined $nflag) {
-			return 0;
-		}
-		# array of mutually-inclusive flag options
-		# that can be used in conjunction with `$flag`
-		my @mutins = @{$git_track_flag_mutins{$flag}};
-		# determine if the next flag is legal, given what
-		# we already know from previous flag options
-		my $in_array = grep { $nflag eq $_ } @mutins;
-		# if `$in_array` returns 0 (missing from array)
-		# return an status code 1 (conflicts found)
-		if (!$in_array) {
-			return 1;
-		}
-		$nindex++;
-	}
-	# otherwise, return 0 (no conflicts found)
-	return 0;
-}
-
-# get the correctly mapped flag option, deriving from
-# a `git track` flag option and mapping to a `git log`
-# flag option, while ignoring any shorthands flags
-# > see `&get_flag_longhand` for further clarity
-sub get_flag {
+# set argument value(s) for `$flag`,
+# whether given to the flag or default
+sub set_args {
 	my $flag = shift;
-	if (grep { $flag eq $_ } @git_track_flags) {
-		$git_track_map_flags{$flag};
+	my $arg  = shift;
+	if (!$arg) {
+		$flags{$flag} = $dargs{$flag};
 	} else {
-		undef;
+		$flags{$flag} = $arg;
 	}
 }
 
-# get implicit `git track` longhand flag option
-# from either a longhand flag (return itself) or
-# a shorthand value, mapped to its corresponding
-# longhand flag option in `%git_track_map_aliases`
-sub get_flag_longhand {
+# require flag options to be case-sensitive, positionally interchangeable,
+# and able to accept a range of arguments, based on the flag
+Getopt::Long::Configure(
+	'no_ignore_case',
+	'no_auto_abbrev',
+	'no_getopt_compat'
+);
+
+# get flag options and arguments passed to the script
+GetOptions(
+	\%flags,
+	'first|f=i{0,1}',
+	'func|F=s{1,1}',
+	'last|l=i{0,1}' => \&set_args,
+	'lines|L=i@{1,2}',
+	'reverse|r'
+) or die "$invalid_usage_error";
+
+# base components of `git log` shell command, represented
+# as an array to make it easier to pass to `system` builtin
+my @git_log = (
+	"git",
+	"log"
+);
+
+sub get_first_n_commits {
+	# @todo: Get first n commits for a file
+}
+
+sub get_format_rflag {
 	my $flag = shift;
-	# if the flag given was a valid longhand value,
-	# simply return its value back to the caller
-	if (grep { $flag eq $_ } @git_track_flags) {
-		$flag;
-	# if the flag given was a valid shorthand (alias) value,
-	# map the flag to its longhand counterpart and return the
-	# longhand flag to the caller in place of the shorthand
-	} elsif (grep { $flag eq $_ } @git_track_aliases) {
-		$git_track_map_aliases{$flag};
-	# otherwise, return `undef` since `$value` didn't match anything
-	} else {
-		undef;
-	}
-}
-
-# get flag mappings and put them into an array
-sub get_flags {
-	my @flags   = @_;
-	my @options = ();
-	foreach my $option (@flags) {
-		# longhand of the flag option (if it's a shorthand flag)
-		$option = &get_flag_longhand($option);
-		if (!&get_flag($option)) {
-			die "$git_track_default_error_message";
+	my @args = shift;
+	if ($flag eq "first") {
+		my $num = shift @args;
+		if (!$num) {
+			return "--diff-filter=A";
+		} else {
+			# this is a placeholder until I finalize
+			# building `&get_first_n_commits` subroutine
+			return "--diff-filter=C";
 		}
-		push @options, $option;
-	}
-	@options;
-}
-
-# get special formatting for specific flag options
-# @todo: Finish building this subroutine
-sub get_special_flag_format {
-	# special flag to format
-	my $sflag = shift;
-	if ($sflag eq "--last") {
-		return "--max-count 1";
-	}
-}
-
-# get resulting command that will be passed
-# to the shell once processing is completed
-sub get_result {
-	my @command = undef;
-	my @flags   = @_;
-	my @options = ();
-	my @sflags  = (
-		"--first",
-		"--func",
-		"--last",
-		"--lines",
-		"--side-by-side"
-	);
-	# verify there aren't any conflicts before
-	# assembling the shell command string
-	if (&has_conflicts(@flags)) {
-		die "$git_track_mutins_error_message";
-	}
-	# iterate over `@flags` array and take additional care
-	# to handle the flag options that need special formatting
-	foreach my $flag (@flags) {
-		my $in_array = grep { $flag eq $_ } @sflags;
-		if ($in_array) {
-			$flag = &get_special_flag_format($flag);
+	# @fix: There seems to be some type of issue
+	# that's causing Git to reject the string of
+	# the function name we're passing to `git log`
+	} elsif ($flag eq "func") {
+		my $funcname = shift @args;
+		return "-L ^:$funcname:$filename";
+	} elsif ($flag eq "last") {
+		my $num = shift @args;
+		if (!$num) {
+			return "--max-count=1";
+		} else {
+			return "--max-count=$num";
 		}
-		push @options, $flag;
+	} elsif ($flag eq "lines") {
+		my @nums  = shift @args;
+		my $lines = shift @nums;
+		my $start = @$lines[0];
+		my $end   = @$lines[1];
+		if (!$end) {
+			return "-L $start:$filename"
+		} else {
+			return "-L $start,$end:$filename";
+		}
 	}
-	# join the arrays into a single string we can pass to `system`
-	@command = join ' ', @git_log, @git_log_flags, @options, $filename;
-	return @command;
 }
 
-# execute `git track` in the shell
+# map to `git log` flag options, format the
+# command and pass it to `system` builtin
 sub git_track {
-	my @command = shift;
-	my $return  = shift;
+	my @command = ();
+	# iterate through flag options and arguments (if applicable)
+	while (my ($flag, $args) = each %flags) {
+		my $rflag = &get_format_rflag($flag, $args);
+		push @command, $rflag;
+	}
+	unshift @command, @git_log, @git_log_flags;
+	push @command, '--', $filename;
 	system @command;
-	# unless explicitly told to do so,
-	# exit the script once the `system`
-	# command has ran and completed
-	if (!defined $return) {
-		exit;
-	# otherwise, return the exit status code
-	# that was emitted from the `system` call
-	} else {
-		$?;
-	}
 }
 
-# determine if value is an integer of not
-sub is_integer {
-	my $value = shift;
-	if ($value =~ /^\d+?$/) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-# verify `$filename` is a valid file before
-# we start processing any additional input
-if (! -e $filename) {
-	die "Could not locate file '$filename'. Please verify the file exists and the path is valid";
-}
-
-# set the default diff view if `$git_log_default_diff`
-# is defined in scope and contains a valid argument
-if (defined $git_log_default_diff) {
-	# get the correct flag option based on the flag given
-	my $diff_view = &get_flag($git_log_default_diff);
-	unshift @git_log_flags, $diff_view if defined $diff_view;
-}
-
-my @aflags = &get_flags(@argv);
-my @result = &get_result(@aflags);
-
-# execute `git track` command in the shell
-git_track @result;
+# execute `git track` command with flag options
+&git_track();
