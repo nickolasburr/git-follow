@@ -14,16 +14,39 @@ Options can be specified to provide specific commit information via the use of f
 
 ### Environment Variables
 
-You can change the default diff style to either `--inline` or `--side-by-side`. The default diff style is `--side-by-side`.
+You can change the default diff style to either _inline_ or _side-by-side_. The default diff style is _side-by-side_.
 
 To update the default diff style, change `$git_log_default_diff` to the desired value.
 
 ### Usage
 
-```
+*Display the first commit for the file*
+
+```shell
 git track --first composer.json
 ```
 
-```
+*Display the last 5 commits for the file*
+
+```shell
 git track --last 5 composer.json
 ```
+
+*Display lines 5 to EOF for the last commit*
+
+```shell
+git track --last --lines 5 composer.json
+```
+
+*Display changes to lines 10 through 15 in the last 3 commits*
+
+```shell
+git track --last 3 --lines 10 15 composer.json
+```
+
+*Display lifetime changes to the function `funcname` in filename.c*
+
+```shell
+git track --func funcname filename.c
+```
+
