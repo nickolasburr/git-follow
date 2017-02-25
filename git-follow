@@ -3,11 +3,10 @@
 # Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
 # License under WTFPL (http://www.wtfpl.net/txt/copying/)
 
-# git-follow: Follow lifetime changes (including renames) of a file
-# throughout the complete history of a Git repository
+# git-follow: Follow lifetime changes (including renames)
+# of a file through the complete history of a Git repository
 use 5.008;
 use Getopt::Long;
-use Data::Dumper;
 use strict;
 use warnings;
 
@@ -30,6 +29,11 @@ $argc or die "$invalid_usage_error";
 # the filename the user is trying to track)
 # and remove it from `@ARGV` array
 my $filename = pop @ARGV;
+
+# logical separator used to help differentiate
+# between ambiguous flag options (and arguments),
+# branch/revision/tag refs, and valid pathspecs
+my $lsep = "--";
 
 # verify `$filename` is a valid pathspec
 if (! -e $filename) {
