@@ -3,7 +3,6 @@
 ### Known Bugs
 
 + Fix issue where `--graph` is still applied when `--reverse` is given
-+ Fix issue where passing pathspec separator (`--`) causes a syntax error
 
 ### Upcoming Features
 
