@@ -3,7 +3,7 @@
 # Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
 # License under WTFPL (http://www.wtfpl.net/txt/copying/)
 
-# git-track: Track lifetime changes (including renames) of a file
+# git-follow: Track lifetime changes (including renames) of a file
 # throughout the complete history of a Git repository
 use 5.008;
 use Getopt::Long;
@@ -14,7 +14,7 @@ use warnings;
 # specific user error type messages
 my $repo_not_found_error   = "Not a Git repository, exiting the script";
 my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
-my $invalid_usage_error    = "Usage: git track [[--first|-f] | [--func|-F] | [--last|-l] | [--lines|-L] | [--reverse|-r]] filename";
+my $invalid_usage_error    = "Usage: git follow [[--first|-f] | [--func|-F] | [--last|-l] | [--lines|-L] | [--reverse|-r]] filename";
 
 # store length of `@ARGV`
 my $argc = @ARGV;
@@ -143,7 +143,7 @@ sub get_format_rflag {
 
 # map to `git log` flag options, format the
 # command and pass it to `system` builtin
-sub git_track {
+sub git_follow {
 	my @command = ();
 	# iterate through flag options and arguments (if applicable)
 	while (my ($flag, $args) = each %flags) {
@@ -156,5 +156,5 @@ sub git_track {
 	system @command;
 }
 
-# execute `git track` command with flag options
-&git_track();
+# execute `git follow` command with flag options
+&git_follow();

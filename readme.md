@@ -1,6 +1,6 @@
-# Git Track
+# Git Follow
 
-`git track` tracks the lifetime changes of a file (including renames) through the history of a Git repository. As such, it will only display commits where the file was modified, providing a simplified log and diff format.
+`git follow` follows the lifetime changes of a file (including renames) through the history of a Git repository. As such, it will only display commits where the file was affected, providing a simplified log and patch diff format.
 
 Options can be specified to provide specific commit information via the use of flags. If no flags are given, all applicable commits will be shown.
 
@@ -20,33 +20,33 @@ To change the diff style to `inline`, set `$git_log_diff` to `undef`.
 
 ### Usage
 
-**Display the first commit when the file was added to the repository and Git initiated tracking**
+**Display the first commit when the file was added to the repository and Git initiated following**
 
 ```shell
-git track --first composer.json
+git follow --first composer.json
 ```
 
 **Display the last 5 commits, where the file was added, modified, and/or deleted** (see [`--diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) for details)
 
 ```shell
-git track --last 5 composer.json
+git follow --last 5 composer.json
 ```
 
 **Display the last commit where lines 5 to EOF were affected**
 
 ```shell
-git track --last --lines 5 composer.json
+git follow --last --lines 5 composer.json
 ```
 
 **Display the last 3 commits where lines 10 through 15 were affected**
 
 ```shell
-git track --last 3 --lines 10 15 composer.json
+git follow --last 3 --lines 10 15 composer.json
 ```
 
 **Display all commits where function `funcname` was affected**
 
 ```shell
-git track --func funcname filename.c
+git follow --func funcname filename.c
 ```
 
