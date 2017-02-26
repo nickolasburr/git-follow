@@ -2,9 +2,24 @@
 
 `git follow` follows the lifetime changes of a file (including renames) through the history of a Git repository. As such, it will only display commits where the file was affected, providing a simplified log and patch diff format.
 
-Options can be specified to provide specific commit information via the use of flags. If no flags are given, all applicable commits will be shown.
+### Installation
+
+To use `git follow`, you need to add the executable somewhere in your `PATH` (e.g. `/usr/local/bin/git-follow`). One solution would be to use `curl` to fetch the latest version:
+
+```shell
+cd /usr/local/bin && curl -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow
+```
+
+And make sure the file is executable via `chmod`:
+
+```shell
+# in /usr/local/bin (or wherever you put it)
+chmod u+x git-follow
+```
 
 ### Flags
+
+Options can be specified to provide specific commit information via the use of flags. If no flags are given, all applicable commits will be shown.
 
 + `-f, --first`: Show the first commit where the file was added to the repository
 + `-F, --func name`: Show all changes for function `name` in the given file
