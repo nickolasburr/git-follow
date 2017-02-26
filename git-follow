@@ -48,12 +48,12 @@ my %flags;
 my $git_log_diff = "--color-words";
 
 # default format to use for `git log --format` flag option
-my $git_log_format = "%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n";
+my $git_log_format = "%C(yellow)%h%Creset -%Creset %s - %C(bold blue)%an%Creset %C(bold magenta)<%ae> %Creset%Cgreen(%cr)%n";
 
 # default `git log` flag options
 my @git_log_flags = (
 	"--follow",
-	"--format='$git_log_format'",
+	"--format=$git_log_format",
 	"--graph",
 	"--no-merges",
 	"--patch-with-stat"
@@ -127,7 +127,7 @@ sub git_follow {
 	# change the diff style, if applicable
 	unshift @git_log_flags, $git_log_diff if defined $git_log_diff;
 	unshift @command, @git_log, @git_log_flags;
-	# pass pathspec separator to `git log`
+	# add pathspec separator and filename
 	push @command, $lsep, $filename;
 	system @command;
 }
@@ -149,7 +149,8 @@ sub set_args {
 Getopt::Long::Configure(
 	'no_ignore_case',
 	'no_auto_abbrev',
-	'no_getopt_compat'
+	'no_getopt_compat',
+	'require_order'
 );
 
 # get flag options and arguments passed to the script
