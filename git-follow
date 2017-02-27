@@ -48,7 +48,14 @@ my %flags;
 my $git_log_diff = "--color-words";
 
 # default format to use for `git log --format` flag option
-my $git_log_format = "%C(yellow)%h%Creset -%Creset %s - %C(bold blue)%an%Creset %C(bold magenta)<%ae> %Creset%Cgreen(%cr)%n";
+my $git_log_format = "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* Commit:  %C(bold magenta)%h%Creset
+* Tree:    %C(bold cyan)%t%Creset
+* Message: %s
+* Author:  %C(bold blue)%an%Creset %C(bold yellow)<%ae>%Creset
+* When:    %C(bold green)%cr
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+";
 
 # default `git log` flag options
 my @git_log_flags = (
