@@ -2,7 +2,7 @@
 
 ### Known Bugs
 
-+ Fix issue where `--graph` is still applied when `--reverse` is given
+None, yet.
 
 ### Upcoming Features
 
