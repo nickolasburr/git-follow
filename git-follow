@@ -46,7 +46,7 @@ my %flags;
 # optionally set `--no-pager` flag option,
 # and `git` won't use a pager (e.g. less) to
 # display logs, patch diffs, etc.
-my $git_no_pager = "--no-pager";
+my $git_no_pager = undef;
 
 # optionally set default view for diffs
 # shown in `git log` (defaults to inline)
