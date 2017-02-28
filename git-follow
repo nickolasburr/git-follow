@@ -58,12 +58,22 @@ my $git_log_format = "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 ";
 
 # default `git log` flag options
-my @git_log_flags = (
-	"--follow",
-	"--format=$git_log_format",
-	"--graph",
-	"--no-merges",
-	"--patch-with-stat"
+my %git_log_flags = (
+	"follow"    => "--follow",
+	"format"    => "--format=$git_log_format",
+	"graph"     => "--graph",
+	"no-merges" => "--no-merges",
+	"patch"     => "--patch-with-stat"
+);
+
+my @git_log_flag_values;
+
+# flag options and their conflicting counterparts
+my %cflags = (
+	"reverse" => [
+		"graph",
+		"follow"
+	]
 );
 
 # default argument values for flag options
@@ -101,7 +111,7 @@ sub get_format_rflag {
 		}
 	} elsif ($flag eq "func") {
 		my $funcname = shift @args;
-		return "-L\^\:$funcname\:$filename";
+		return "-L^:$funcname:$filename";
 	} elsif ($flag eq "last") {
 		my $num = shift @args;
 		if (!$num) {
@@ -131,9 +141,12 @@ sub git_follow {
 		my $rflag = &get_format_rflag($flag, $args);
 		push @command, $rflag;
 	}
+	# update `@git_log_flag_values` with
+	# corresponding `git log` flag options
+	@git_log_flag_values = values %git_log_flags;
 	# change the diff style, if applicable
-	unshift @git_log_flags, $git_log_diff if defined $git_log_diff;
-	unshift @command, @git_log, @git_log_flags;
+	unshift @git_log_flag_values, $git_log_diff if defined $git_log_diff;
+	unshift @command, @git_log, @git_log_flag_values;
 	# add pathspec separator and filename
 	push @command, $lsep, $filename;
 	system @command;
@@ -149,6 +162,26 @@ sub set_args {
 	} else {
 		$flags{$flag} = $arg;
 	}
+}
+
+# remove conflicting `git log` flag options so
+# they're not passed to `system`, causing errors
+sub rm_flags {
+	my $flag    = shift;
+	my $cnflags = $cflags{$flag};
+	foreach (values @$cnflags) {
+		my $cnflag = shift @$cnflags;
+		delete $git_log_flags{$cnflag};
+	}
+}
+
+# add flag to `%git_log_flags` hash
+sub set_flag {
+	my $nflag = shift;
+	&rm_flags($nflag);
+	# @todo: This really should be taken from
+	# as hash and not inlined like it is
+	$git_log_flags{$nflag} = "--$nflag";
 }
 
 # require flag options to be case-sensitive, positionally interchangeable,
@@ -167,7 +200,7 @@ GetOptions(
 	'func|F=s{1,1}',
 	'last|l=i{0,1}' => \&set_args,
 	'lines|L=i@{1,2}',
-	'reverse|r'
+	'reverse|r'     => \&set_flag
 ) or die "$invalid_usage_error";
 
 # execute `git follow` command with flag options
