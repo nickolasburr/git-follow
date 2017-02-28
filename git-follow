@@ -43,6 +43,11 @@ if (! -e $filename) {
 # flag options passed to the script
 my %flags;
 
+# optionally set `--no-pager` flag option,
+# and `git` won't use a pager (e.g. less) to
+# display logs, patch diffs, etc.
+my $git_no_pager = "--no-pager";
+
 # optionally set default view for diffs
 # shown in `git log` (defaults to inline)
 my $git_log_diff = "--color-words";
@@ -89,6 +94,13 @@ my @git_log = (
 	"git",
 	"log"
 );
+
+# if `$git_no_pager` is defined,
+# pass `--no-pager` flag to `git`
+if (defined($git_no_pager)) {
+	my $git = shift @git_log;
+	unshift @git_log, ($git, $git_no_pager);
+}
 
 # get the first n commits for the given pathspec
 sub get_first_n_commits {
@@ -178,9 +190,10 @@ sub rm_flags {
 # add flag to `%git_log_flags` hash
 sub set_flag {
 	my $nflag = shift;
+	# remove conflicting flags
 	&rm_flags($nflag);
-	# @todo: This really should be taken from
-	# as hash and not inlined like it is
+	# @todo: This really should be taken
+	# from a hash value and not inlined
 	$git_log_flags{$nflag} = "--$nflag";
 }
 
