@@ -29,9 +29,10 @@ Options can be specified to provide specific commit information via the use of f
 
 ### Environment Variables
 
-You can change the diff style to display patches as `inline` or `side-by-side`. The default is `side-by-side` ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)).
+You can set environment variables to customize the output of `git follow`. The following are currently available:
 
-To change the diff style to `inline`, set `$git_log_diff` to `undef`.
++ `$git_no_pager`: Defaults to `undef`. Set to `--no-pager` to prevent Git from using the default pager (e.g. `less`) to display log entries, patch diffs, etc.
++ `$git_log_diff`: Defaults to `side-by-side` ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)). Set to `undef` to display `inline`.
 
 ### Usage
 
