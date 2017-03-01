@@ -102,7 +102,8 @@ if (defined($git_no_pager)) {
 	unshift @git_log, ($git, $git_no_pager);
 }
 
-sub is_numeric {
+# determine if value is an integer
+sub is_integer {
     my $num = shift;
 	if (defined $num) {
 		return $num =~ /^\d+$/ ? 1 : 0;
@@ -111,24 +112,22 @@ sub is_numeric {
 	}
 }
 
-# get rev object for the given <rev>
-sub get_rev_object {
-	my $revr_start = shift;
-	my $revr_end   = shift;
-	# @todo: Allow passing an integer to the range
-	# to be interpreted as `<rev>@{n}`, where `n` is
-	# the number of ancestors to traverse through
-	return "$revr_start..$revr_end";
-}
-
-# get range of revisions for the given pathspec
+# get rev range for the given pathspec
 sub get_revr {
 	my $revr_start = shift;
 	my $revr_end   = shift;
-	# if there was no end rev range given,
-	# set the default value to `HEAD`
+	# if there was no end rev range,
+	# set default value to `HEAD`
 	$revr_end = "HEAD" if not defined $revr_end;
-	&get_rev_object($revr_start, $revr_end);
+	# if only an integer was given, interpolate
+	# as a rev range for the current branch
+	# --------------------------------------------
+	# @todo: allow refname before '@{n}', either as flag option
+	# argument (e.g. --branchname master --range 3 5) or passed
+	# directly to `--range` (e.g. --range master 3 5)
+	$revr_start = "\@{$revr_start}" if &is_integer($revr_start);
+	$revr_end   = "\@{$revr_end}" if &is_integer($revr_end);
+	return "$revr_start..$revr_end";
 }
 
 # format the `git log` flag with argument(s) given
@@ -158,7 +157,6 @@ sub get_format_rflag {
 			return "-L $start,$end:$filename";
 		}
 	} elsif ($flag eq "range") {
-		# get range of revisions
 		my $revs       = shift @args;
 		my $revr_start = @$revs[0];
 		my $revr_end   = @$revs[1];
@@ -239,7 +237,7 @@ GetOptions(
 	'last|l=i{0,1}' => \&set_args,
 	'lines|L=i@{1,2}',
 	'range|r=s@{1,2}',
-	'reverse|r'     => \&set_aux_flag
+	'reverse|R'     => \&set_aux_flag
 ) or die "$invalid_usage_error";
 
 # execute `git follow` command with flag options
