@@ -17,6 +17,13 @@ And make sure the file is executable via `chmod`:
 chmod u+x git-follow
 ```
 
+### Environment Variables
+
+You can set environment variables to customize the output of `git follow`. The following are currently available:
+
++ `$git_log_diff`: Defaults to `side-by-side` ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)). Set to `undef` to display `inline`.
++ `$git_no_pager`: Defaults to `undef`. Set to `--no-pager` to prevent Git from using the default pager (e.g. `less`) to display log entries, patch diffs, etc.
+
 ### Flags
 
 Options can be specified to provide specific commit information via the use of flags. If no flags are given, all applicable commits will be shown.
@@ -25,14 +32,8 @@ Options can be specified to provide specific commit information via the use of f
 + `-F, --func name`: Show all changes for function `name` in the given file
 + `-l, --last [n]`: Show the last _n_ commits where the file was modified (or the last commit, if _n_ is omitted)
 + `-L, --lines n [m]`: Show all changes between lines `n` and `m`. If only one number is given, it will serve as the starting boundary to EOF
-+ `-r, --reverse`: Show all changes in reverse order, from oldest to newest
-
-### Environment Variables
-
-You can set environment variables to customize the output of `git follow`. The following are currently available:
-
-+ `$git_no_pager`: Defaults to `undef`. Set to `--no-pager` to prevent Git from using the default pager (e.g. `less`) to display log entries, patch diffs, etc.
-+ `$git_log_diff`: Defaults to `side-by-side` ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)). Set to `undef` to display `inline`.
++ `-r, --range <startref> [<endref>]`: Show all changes between `<startref>` and `<endref>`. If `<endref>` is omitted, defaults to `HEAD`. See [git-revisions](https://git-scm.com/docs/gitrevisions#_specifying_revisions) for syntax.
++ `-R, --reverse`: Show all changes in reverse order, from oldest to newest
 
 ### Usage
 
