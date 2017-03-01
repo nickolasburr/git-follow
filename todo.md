@@ -6,11 +6,11 @@ None, yet.
 
 ### Upcoming Features
 
++ Add `--branch` flag to specify a branch other than the currently checked out branch
 + Add `--merges` flag to also include merge commits (merge commits are suppressed, by default. see [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges))
 + Add `--no-patch` flag to prevent displaying a patch diff (shows patch with stat, by default. see [`--patch-with-stat`](https://git-scm.com/docs/git-log#git-log---patch-with-stat))
 + Add `--no-renames` flag to prevent following renames of a file
 + Add `--pickaxe` flag to search for a generic string in a file
-+ Add `--range` flag to specify a range of commits (see [git-revisions[1]](https://git-scm.com/docs/gitrevisions#_specifying_revisions) for syntax)
 + Add `--total` flag to get the total number of commits that affected the file
 
 ### Potential Features
