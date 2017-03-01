@@ -102,34 +102,32 @@ if (defined($git_no_pager)) {
 	unshift @git_log, ($git, $git_no_pager);
 }
 
-sub is_numeric {
+# determine if value is an integer
+sub is_integer {
     my $num = shift;
 	if (defined $num) {
 		return $num =~ /^\d+$/ ? 1 : 0;
 	} else {
-		warn "is_numeric requires an argument!";
+		return 0;
 	}
 }
 
-# get rev commit hash by index
-sub get_rev_index {
-	my $index = shift;
-	if (!&is_numeric($index)) {
-		die "get_rev_index requires an integer!";
-	} else {
-		# @todo: Get an array of commit hashes
-		# and find the commit matching the index
-	}
-}
-
-# get range of revisions for the given pathspec
+# get rev range for the given pathspec
 sub get_revr {
 	my $revr_start = shift;
 	my $revr_end   = shift;
-	# if there was no end rev range given
-	# set the default value to `HEAD`
+	# if there was no end rev range,
+	# set default value to `HEAD`
 	$revr_end = "HEAD" if not defined $revr_end;
-	&get_rev_index($revr_start, $revr_end);
+	# if only an integer was given, interpolate
+	# as a rev range for the current branch
+	# --------------------------------------------
+	# @todo: allow refname before '@{n}', either as flag option
+	# argument (e.g. --branchname master --range 3 5) or passed
+	# directly to `--range` (e.g. --range master 3 5)
+	$revr_start = "\@{$revr_start}" if &is_integer($revr_start);
+	$revr_end   = "\@{$revr_end}" if &is_integer($revr_end);
+	return "$revr_start..$revr_end";
 }
 
 # format the `git log` flag with argument(s) given
@@ -159,9 +157,9 @@ sub get_format_rflag {
 			return "-L $start,$end:$filename";
 		}
 	} elsif ($flag eq "range") {
-		# get range of revisions
-		my $revr_start = shift @args;
-		my $revr_end   = shift @args;
+		my $revs       = shift @args;
+		my $revr_start = @$revs[0];
+		my $revr_end   = @$revs[1];
 		return &get_revr($revr_start, $revr_end);
 	} elsif ($flag eq "reverse") {
 		return "--reverse";
@@ -185,7 +183,6 @@ sub git_follow {
 	unshift @command, @git_log, @git_log_flag_values;
 	# add pathspec separator and filename
 	push @command, $lsep, $filename;
-	print "Final command: @command\n";
 	system @command;
 }
 
@@ -215,7 +212,7 @@ sub rm_cflags {
 # add flag to `%git_log_flags` hash
 sub set_aux_flag {
 	my $nflag = shift;
-	# return the formatted flag
+	# get formatted `git log` flag
 	my $rflag = &get_format_rflag($nflag);
 	# remove conflicting flags
 	&rm_cflags($nflag);
@@ -237,10 +234,10 @@ GetOptions(
 	\%flags,
 	'first|f',
 	'func|F=s{1,1}',
-	'last|l=i{0,1}'   => \&set_args,
+	'last|l=i{0,1}' => \&set_args,
 	'lines|L=i@{1,2}',
-	'range|r=s@{1,2}' => \&set_args,
-	'reverse|r'       => \&set_aux_flag
+	'range|r=s@{1,2}',
+	'reverse|R'     => \&set_aux_flag
 ) or die "$invalid_usage_error";
 
 # execute `git follow` command with flag options
