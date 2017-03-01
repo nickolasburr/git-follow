@@ -113,14 +113,19 @@ sub is_numeric {
 
 # get rev object for the given <rev>
 sub get_rev_object {
-	# @todo: Get commit/tree object for given <rev>
+	my $revr_start = shift;
+	my $revr_end   = shift;
+	# @todo: Allow passing an integer to the range
+	# to be interpreted as `<rev>@{n}`, where `n` is
+	# the number of ancestors to traverse through
+	return "$revr_start..$revr_end";
 }
 
 # get range of revisions for the given pathspec
 sub get_revr {
 	my $revr_start = shift;
 	my $revr_end   = shift;
-	# if there was no end rev range given
+	# if there was no end rev range given,
 	# set the default value to `HEAD`
 	$revr_end = "HEAD" if not defined $revr_end;
 	&get_rev_object($revr_start, $revr_end);
@@ -154,8 +159,9 @@ sub get_format_rflag {
 		}
 	} elsif ($flag eq "range") {
 		# get range of revisions
-		my $revr_start = shift @args;
-		my $revr_end   = shift @args;
+		my $revs       = shift @args;
+		my $revr_start = @$revs[0];
+		my $revr_end   = @$revs[1];
 		return &get_revr($revr_start, $revr_end);
 	} elsif ($flag eq "reverse") {
 		return "--reverse";
@@ -179,7 +185,6 @@ sub git_follow {
 	unshift @command, @git_log, @git_log_flag_values;
 	# add pathspec separator and filename
 	push @command, $lsep, $filename;
-	print "Final command: @command\n";
 	system @command;
 }
 
@@ -231,10 +236,10 @@ GetOptions(
 	\%flags,
 	'first|f',
 	'func|F=s{1,1}',
-	'last|l=i{0,1}'   => \&set_args,
+	'last|l=i{0,1}' => \&set_args,
 	'lines|L=i@{1,2}',
-	'range|r=s@{1,2}' => \&set_args,
-	'reverse|r'       => \&set_aux_flag
+	'range|r=s@{1,2}',
+	'reverse|r'     => \&set_aux_flag
 ) or die "$invalid_usage_error";
 
 # execute `git follow` command with flag options
