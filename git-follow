@@ -107,19 +107,13 @@ sub is_numeric {
 	if (defined $num) {
 		return $num =~ /^\d+$/ ? 1 : 0;
 	} else {
-		warn "is_numeric requires an argument!";
+		return 0;
 	}
 }
 
-# get rev commit hash by index
-sub get_rev_index {
-	my $index = shift;
-	if (!&is_numeric($index)) {
-		die "get_rev_index requires an integer!";
-	} else {
-		# @todo: Get an array of commit hashes
-		# and find the commit matching the index
-	}
+# get rev object for the given <rev>
+sub get_rev_object {
+	# @todo: Get commit/tree object for given <rev>
 }
 
 # get range of revisions for the given pathspec
@@ -129,7 +123,7 @@ sub get_revr {
 	# if there was no end rev range given
 	# set the default value to `HEAD`
 	$revr_end = "HEAD" if not defined $revr_end;
-	&get_rev_index($revr_start, $revr_end);
+	&get_rev_object($revr_start, $revr_end);
 }
 
 # format the `git log` flag with argument(s) given
@@ -215,7 +209,7 @@ sub rm_cflags {
 # add flag to `%git_log_flags` hash
 sub set_aux_flag {
 	my $nflag = shift;
-	# return the formatted flag
+	# get formatted `git log` flag
 	my $rflag = &get_format_rflag($nflag);
 	# remove conflicting flags
 	&rm_cflags($nflag);
