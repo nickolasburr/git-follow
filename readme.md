@@ -52,7 +52,7 @@ git follow --last 5 composer.json
 **Display the last commit where lines 5 to EOF were affected**
 
 ```shell
-git follow --last --lines 5 composer.json
+git follow --last --lines 5 -- composer.json
 ```
 
 **Display the last 3 commits where lines 10 through 15 were affected**
@@ -64,6 +64,21 @@ git follow --last 3 --lines 10 15 composer.json
 **Display all commits where function `funcname` was affected**
 
 ```shell
-git follow --func funcname filename.c
+git follow --func funcname archive.c
 ```
 
+**Display the fifth prior value of `master` where `worktree.c` was affected**
+
+```shell
+git follow --range master@{5} -- worktree.c
+...
+git follow --range 5 -- worktree.c # same as above (assuming the currently checked out branch is `master`)
+```
+
+**Display all commits which occurred between two days and one hour ago and affected `apply.c`**<sup>[1](#relative-format)</sup>
+
+```shell
+git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
+```
+
+<a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. 10 minutes ago), you need to delimit the string with single or double quotes.
