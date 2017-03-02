@@ -83,7 +83,6 @@ my %cflags = (
 
 # default argument values for flag options
 my %dargs = (
-	"first" => "A",
 	"last"  => 1,
 	"lines" => 1
 );
