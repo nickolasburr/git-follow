@@ -37,7 +37,7 @@ Options can be specified to provide specific commit information via the use of f
 
 ### Usage
 
-**Display the first commit when the file was added to the repository and Git initiated following**
+**Display the first commit when the file was added to the repository and Git initiated tracking**
 
 ```shell
 git follow --first composer.json
