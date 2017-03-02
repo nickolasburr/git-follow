@@ -103,7 +103,7 @@ if (defined($git_no_pager)) {
 
 # determine if value is an integer
 sub is_integer {
-    my $num = shift;
+	my $num = shift;
 	if (defined $num) {
 		return $num =~ /^\d+$/ ? 1 : 0;
 	} else {
