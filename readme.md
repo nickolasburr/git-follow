@@ -81,4 +81,10 @@ git follow --range 5 -- worktree.c # same as above (assuming the currently check
 git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
 ```
 
+**Display the total number of commits (as an integer) that affected rebase.c**
+
+```shell
+git follow --total -- rebase.c
+```
+
 <a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. 10 minutes ago), you need to delimit the string with single or double quotes.
