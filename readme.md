@@ -81,7 +81,7 @@ git follow --range 5 -- worktree.c # same as above (assuming the currently check
 git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
 ```
 
-**Display the total number of commits (as an integer) that affected rebase.c**
+**Display the total number of commits (as an integer) that affected `rebase.c`**
 
 ```shell
 git follow --total -- rebase.c
