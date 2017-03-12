@@ -11,7 +11,6 @@ None, yet.
 + Add `--no-patch` flag to prevent displaying a patch diff (shows patch with stat, by default. see [`--patch-with-stat`](https://git-scm.com/docs/git-log#git-log---patch-with-stat))
 + Add `--no-renames` flag to prevent following renames of a file
 + Add `--pickaxe` flag to search for a generic string in a file
-+ Add `--total` flag to get the total number of commits that affected the file
 
 ### Potential Features
 
