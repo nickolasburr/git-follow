@@ -53,7 +53,9 @@ my $git_no_pager = undef;
 my $git_log_diff = "--color-words";
 
 # default format to use for `git log --format` flag option
-my $git_log_format = "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+my $git_log_format =
+"
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * Commit:  %C(bold magenta)%h%Creset
 * Tree:    %C(bold cyan)%t%Creset
 * Message: %s
@@ -92,6 +94,16 @@ my %dargs = (
 my @git_log = (
 	"git",
 	"log"
+);
+
+# non-standard pipelines for use with non `git log` commands
+my %ns_pipelines = (
+	"total" => [
+		"git",
+		"rev-list",
+		"HEAD",
+		"--count"
+	]
 );
 
 # if `$git_no_pager` is defined,
@@ -219,6 +231,19 @@ sub set_aux_flag {
 	$git_log_flags{$nflag} = $rflag;
 }
 
+# set non-standard pipeline that circumvents `git log`,
+# which is essential for flag options like `--total` that
+# shouldn't be passed to `git log` but instead use
+# a completely separate command and return a value
+sub set_ns_pipeline {
+	my $flag = shift;
+	my $base = $ns_pipelines{$flag};
+	my @pipe = ();
+	push @pipe, @$base, $lsep, $filename;
+	system(@pipe);
+	exit 0;
+}
+
 # require flag options to be case-sensitive, positionally interchangeable,
 # and able to accept a range of arguments, based on the flag
 Getopt::Long::Configure(
@@ -236,7 +261,8 @@ GetOptions(
 	'last|l=i{0,1}' => \&set_args,
 	'lines|L=i@{1,2}',
 	'range|r=s@{1,2}',
-	'reverse|R'     => \&set_aux_flag
+	'reverse|R'     => \&set_aux_flag,
+	'total|T'       => \&set_ns_pipeline
 ) or die "$invalid_usage_error";
 
 # execute `git follow` command with flag options
