@@ -34,6 +34,7 @@ Options can be specified to provide specific commit information via the use of f
 + `-L, --lines n [m]`: Show all changes between lines `n` and `m`. If only one number is given, it will serve as the starting boundary to EOF
 + `-r, --range <startref> [<endref>]`: Show all changes between `<startref>` and `<endref>`. If `<endref>` is omitted, defaults to `HEAD`. See [git-revisions](https://git-scm.com/docs/gitrevisions#_specifying_revisions) for syntax.
 + `-R, --reverse`: Show all changes in reverse order, from oldest to newest
++ `-T, --total`: Show the total number of commits, as an integer
 
 ### Usage
 

@@ -13,7 +13,7 @@ use warnings;
 # specific user error type messages
 my $repo_not_found_error   = "Not a Git repository, exiting the script";
 my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
-my $invalid_usage_error    = "Usage: git follow [[--first|-f] | [--func|-F] | [--last|-l] | [--lines|-L] | [--reverse|-r]] filename";
+my $invalid_usage_error    = "Usage: git follow [[--first|-f] | [--func|-F] | [--last|-l] | [--lines|-L] | [--range|-R] | [--reverse|-r] | [--total|-T]] filename";
 
 # store length of `@ARGV`
 my $argc = @ARGV;
