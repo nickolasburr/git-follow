@@ -68,7 +68,7 @@ git follow --last 3 --lines 10 15 composer.json
 git follow --func funcname archive.c
 ```
 
-**Display the fifth prior value of `master` where `worktree.c` was affected**
+**Only show commits that affected `worktree.c` in the range from fifth ancestor of `master` (`master@{5}`) to `master`**
 
 ```shell
 git follow --range master@{5} -- worktree.c
