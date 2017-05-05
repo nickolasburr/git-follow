@@ -56,8 +56,8 @@ my $git_log_diff = "--color-words";
 my $git_log_format =
 "
 -----------------------------------------------------------
-| Commit:  %C(bold magenta)%h%Creset
-| Tree:    %C(bold cyan)%t%Creset
+| Commit:  %C(dim magenta)%h%Creset
+| Tree:    %C(dim cyan)%t%Creset
 | Message: %s
 | Author:  %C(bold blue)%an%Creset %C(bold yellow)<%ae>%Creset
 | When:    %C(bold green)%cr
