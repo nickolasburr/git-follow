@@ -36,9 +36,7 @@ my $filename = pop @ARGV;
 my $lsep = "--";
 
 # verify `$filename` is a valid pathspec
-if (! -e $filename) {
-	die "$invalid_pathspec_error";
-}
+-e $filename or die "$invalid_pathspec_error";
 
 # flag options passed to the script
 my %flags;
