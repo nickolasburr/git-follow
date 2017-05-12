@@ -7,6 +7,11 @@ version 1.0.6
 .B git\-follow [OPTION] [--] pathspec
 .SH DESCRIPTION
 Follow lifetime changes of a pathspec through the history of a Git repository.
+.SH ENVIRONMENT
+.IP "$GIT_LOG_DIFF"
+Diff presentation mode. Defaults to side by side. Set to `undef' to display inline.
+.IP "$GIT_NO_PAGER"
+Whether Git should use a pager or not. Defaults to true. Set to `--no-pager' to prevent Git from using the default pager (e.g. less) to display commits, patch diffs, etc.
 .SH OPTIONS
 .IP "--first, -f"
 Show the first commit where Git initiated tracking of the given pathspec.
