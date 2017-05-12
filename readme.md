@@ -1,10 +1,10 @@
 # Git Follow
 
-`git follow` follows the lifetime changes of a file (including renames) through the history of a Git repository. As such, it will only display commits where the file was affected, providing a simplified log and patch diff format.
+`git-follow` follows the lifetime changes of a file (including renames) through the history of a Git repository. As such, it will only display commits where the file was affected, providing a simplified log and patch diff format.
 
 ### Installation
 
-To use `git follow`, you need to add the executable to your `PATH` (e.g. `/usr/local/bin`).
+To use `git-follow`, you need to add the executable to your `PATH` (e.g. `/usr/local/bin`).
 
 ```shell
 cd /usr/local/bin && curl -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow
@@ -27,8 +27,8 @@ cd /usr/share/man/man1 && curl -sSL -O https://raw.githubusercontent.com/nickola
 
 You can set environment variables to customize the output of `git follow`. The following are currently available:
 
-+ `$git_log_diff`: Defaults to `side-by-side` ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)). Set to `undef` to display `inline`.
-+ `$git_no_pager`: Defaults to `undef`. Set to `--no-pager` to prevent Git from using the default pager (e.g. `less`) to display log entries, patch diffs, etc.
++ `$GIT_LOG_DIFF`: Diff presentation mode. Defaults to side by side ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)). Set to `undef` to display inline.
++ `$GIT_NO_PAGER`: Whether Git should use a pager or not. Defaults to true. Set to `--no-pager` to prevent Git from using the default pager (e.g. less) to display commits, patch diffs, etc.
 
 ### Options
 

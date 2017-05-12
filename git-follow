@@ -10,9 +10,26 @@ use Getopt::Long;
 use strict;
 use warnings;
 
+###
+### Environment Variables
+###
+
+# optionally set default view for diffs
+# shown in `git log` (defaults to inline)
+my $GIT_LOG_DIFF = "--color-words";
+
+# optionally set `--no-pager` flag option,
+# and Git won't use a pager (e.g. less) to
+# display commits, patch diffs, etc.
+my $GIT_NO_PAGER = undef;
+
+###
+### Error Notices
+###
+
 my $repo_not_found_error   = "Not a Git repository, exiting the script";
 my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
-my $invalid_usage_error    = <<"END_USAGE_ERROR";
+my $invalid_usage_error    = <<"END_INVALID_USAGE_ERROR";
 
   Usage: git follow [OPTIONS] [--] pathspec
 
@@ -26,7 +43,7 @@ my $invalid_usage_error    = <<"END_USAGE_ERROR";
 	--reverse, -R                           Show commits in reverse chronological order.
 	--total,   -T                           Show the total number of commits for the given pathspec.
 
-END_USAGE_ERROR
+END_INVALID_USAGE_ERROR
 
 # store length of `@ARGV`
 my $argc = @ARGV;
@@ -43,25 +60,16 @@ $argc or die "$invalid_usage_error";
 # and remove it from `@ARGV` array
 my $filename = pop @ARGV;
 
-# logical separator used to help differentiate
-# between ambiguous flag options (and arguments),
-# branch/revision/tag refs, and valid pathspecs
-my $lsep = "--";
-
 # verify `$filename` is a valid pathspec
 -e $filename or die "$invalid_pathspec_error";
 
 # flag options passed to the script
 my %flags;
 
-# optionally set `--no-pager` flag option,
-# and `git` won't use a pager (e.g. less) to
-# display logs, patch diffs, etc.
-my $git_no_pager = undef;
-
-# optionally set default view for diffs
-# shown in `git log` (defaults to inline)
-my $git_log_diff = "--color-words";
+# logical separator used to help differentiate
+# between ambiguous flag options (and arguments),
+# branch/revision/tag refs, and valid pathspecs
+my $lsep = "--";
 
 # default format to use for `git log --format` flag option
 my $git_log_format = <<"END_LOG_FORMAT";
@@ -116,11 +124,11 @@ my %ns_pipelines = (
 	]
 );
 
-# if `$git_no_pager` is defined,
+# if `$GIT_NO_PAGER` is defined,
 # pass `--no-pager` flag to `git`
-if (defined($git_no_pager)) {
+if (defined($GIT_NO_PAGER)) {
 	my $git = shift @git_log;
-	unshift @git_log, ($git, $git_no_pager);
+	unshift @git_log, ($git, $GIT_NO_PAGER);
 }
 
 # determine if value is an integer
@@ -200,7 +208,7 @@ sub git_follow {
 	# corresponding `git log` flag options
 	@git_log_flag_values = values %git_log_flags;
 	# change the diff style, if applicable
-	unshift @git_log_flag_values, $git_log_diff if defined $git_log_diff;
+	unshift @git_log_flag_values, $GIT_LOG_DIFF if defined $GIT_LOG_DIFF;
 	unshift @command, @git_log, @git_log_flag_values;
 	# add pathspec separator and filename
 	push @command, $lsep, $filename;
