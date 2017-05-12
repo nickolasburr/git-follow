@@ -3,8 +3,8 @@
 # Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
 # License under WTFPL (http://www.wtfpl.net/txt/copying/)
 
-# git-follow: Follow lifetime changes (including renames)
-# of a file through the complete history of a Git repository
+# git-follow: Follow lifetime changes of a pathspec through the history of a Git repository
+
 use 5.008;
 use Getopt::Long;
 use strict;
@@ -13,7 +13,23 @@ use warnings;
 # specific user error type messages
 my $repo_not_found_error   = "Not a Git repository, exiting the script";
 my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
-my $invalid_usage_error    = "Usage: git follow [[--first|-f] | [--func|-F] | [--last|-l] | [--lines|-L] | [--range|-R] | [--reverse|-r] | [--total|-T]] filename";
+my $invalid_usage_error    = <<"END_USAGE_ERROR";
+
+  Usage: git follow [OPTIONS] [--] pathspec
+
+  git-follow - Follow lifetime changes of a pathspec through the history of a Git repository
+
+  Flag options:
+
+	--first,   -f                           Show the first commit where Git initiated tracking of the pathspec
+	--func,    -F                           Show changes for specific function
+	--last,    -l [n]                       Show the last n commits where the pathspec was affected. Omitting n defaults to the last commit.
+	--lines,   -L n [m]                     Show changes between lines n and m. Omitting m defaults to EOF boundary.
+	--range,   -r <startref> [<endref>]     Show changes between <startref> and <endref>. Omitting <endref> defaults to HEAD. See git-revisions for syntax.
+	--reverse, -R                           Show changes in reverse order, from oldest to newest.
+	--total,   -T                           Show total number of commits for the pathspec
+
+END_USAGE_ERROR
 
 # store length of `@ARGV`
 my $argc = @ARGV;
@@ -265,3 +281,34 @@ GetOptions(
 
 # execute `git follow` command with flag options
 &git_follow();
+
+__END__
+
+=head1 NAME
+
+	git-follow - Follow lifetime changes of a pathspec through the history of a Git repository
+
+=cut
+
+=head1 SYNOPSIS
+
+	git follow [[OPTIONS] [--]] pathspec
+
+=cut
+
+=head1 DESCRIPTION
+
+	Follow lifetime changes of a pathspec through the history of a Git repository.
+
+	--first, -f
+		Show the first commit where Git initiated tracking of the pathspec
+
+	--func, -F
+		Show changes for specific function
+
+	--last, -l [n]
+		Show the last n commits where the pathspec was affected (omitting n defaults to the last commit)
+
+	--lines, -L n [m]
+
+=cut
