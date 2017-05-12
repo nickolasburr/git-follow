@@ -1,19 +1,32 @@
 #!/usr/bin/env perl
 
+# git-follow - Follow lifetime changes of a pathspec through the history of a Git repository
+
 # Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
 # License under WTFPL (http://www.wtfpl.net/txt/copying/)
 
-# git-follow: Follow lifetime changes (including renames)
-# of a file through the complete history of a Git repository
 use 5.008;
 use Getopt::Long;
 use strict;
 use warnings;
 
-# specific user error type messages
 my $repo_not_found_error   = "Not a Git repository, exiting the script";
 my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
-my $invalid_usage_error    = "Usage: git follow [[--first|-f] | [--func|-F] | [--last|-l] | [--lines|-L] | [--range|-R] | [--reverse|-r] | [--total|-T]] filename";
+my $invalid_usage_error    = <<"END_USAGE_ERROR";
+
+  Usage: git follow [OPTIONS] [--] pathspec
+
+  Flag options:
+
+	--first,   -f                           Show the first commit where Git initiated tracking of the given pathspec.
+	--func,    -F                           Show commits which affected function `funcname' in the given pathspec. See git-log(1) for details.
+	--last,    -l [n]                       Show the last n commits where the given pathspec was affected. Omitting n defaults to the last commit.
+	--lines,   -L n [m]                     Show commits which affected lines n and m. Omitting m defaults to EOF boundary.
+	--range,   -r <startref> [<endref>]     Show commits between <startref> and <endref>. Omitting <endref> defaults to HEAD. See git-revisions(1) for details.
+	--reverse, -R                           Show commits in reverse chronological order.
+	--total,   -T                           Show the total number of commits for the given pathspec.
+
+END_USAGE_ERROR
 
 # store length of `@ARGV`
 my $argc = @ARGV;
@@ -51,16 +64,15 @@ my $git_no_pager = undef;
 my $git_log_diff = "--color-words";
 
 # default format to use for `git log --format` flag option
-my $git_log_format =
-"
+my $git_log_format = <<"END_LOG_FORMAT";
 -----------------------------------------------------------
-| Commit:  %C(dim magenta)%h%Creset
-| Tree:    %C(dim cyan)%t%Creset
-| Message: %s
+| Commit:  %C(bold cyan)%h%Creset
+| Tree:    %C(bold magenta)%t%Creset
 | Author:  %C(bold blue)%an%Creset %C(bold yellow)<%ae>%Creset
-| When:    %C(bold green)%cr
+| Date:    %C(dim cyan)%cD%Creset %C(bold green)[%cr]%Creset
+| Message: %s
 -----------------------------------------------------------
-";
+END_LOG_FORMAT
 
 # default `git log` flag options
 my %git_log_flags = (
@@ -265,3 +277,62 @@ GetOptions(
 
 # execute `git follow` command with flag options
 &git_follow();
+
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+	git-follow - Follow lifetime changes of a pathspec through the history of a Git repository
+
+=head1 VERSION
+
+	version 1.0.6
+
+=head1 SYNOPSIS
+
+	git follow [OPTIONS] [--] pathspec
+
+=head1 DESCRIPTION
+
+	Follow lifetime changes of a pathspec through the history of a Git repository.
+
+=head1 OPTIONS
+
+	--first, -f
+		Show the first commit where Git initiated tracking of the given pathspec.
+
+	--func, -F funcname
+		Show commits which affected function `funcname' in the given pathspec. See git-log(1) for details.
+
+	--last, -l [n]
+		Show the last n commits where the given pathspec was affected. Omitting n defaults to the last commit.
+
+	--lines, -L n [m]
+		Show commits which affected lines n and m. Omitting m defaults to EOF boundary.
+
+	--range, -r <startref> [<endref>]
+		Show commits between <startref> and <endref>. Omitting <endref> defaults to HEAD. See git-revisions(1) for details.
+
+	--reverse, -R
+		Show commits in reverse chronological order.
+
+	--total, -T
+		Show the total number of commits for the given pathspec.
+
+=head1 BUGS
+
+	To file a bug report, please submit an issue at https://github.com/nickolasburr/git-follow/issues
+
+=head1 AUTHOR
+
+	Written by Nickolas Burr <nickolasburr@gmail.com>
+
+=head1 SEE ALSO
+
+	git-log(1), git-diff(1), git-config(1), git-revisions(1)
+
+=cut

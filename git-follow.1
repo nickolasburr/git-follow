@@ -1,0 +1,35 @@
+.TH git\-follow 1 "May 2017" Linux "User Manuals"
+.SH NAME
+git\-follow \- Follow lifetime changes of a pathspec in Git
+.SH VERSION
+version 1.0.6
+.SH SYNOPSIS
+.B git\-follow [OPTION] [--] pathspec
+.SH DESCRIPTION
+Follow lifetime changes of a pathspec through the history of a Git repository.
+.SH OPTIONS
+.IP "--first, -f"
+Show the first commit where Git initiated tracking of the given pathspec.
+.IP "--func, -F funcname"
+Show commits which affected function `funcname' in the given pathspec. See git-log(1) for details.
+.IP "--last, -l [n]"
+Show the last
+.B n
+commits where the pathspec was affected. Omitting n defaults to the last commit.
+.IP "--lines, -L n [m]"
+Show commits which affected lines n and m. Omitting m defaults to EOF boundary.
+.IP "--range, -r <startref> [<endref>]"
+Show commits between <startref> and <endref>. Omitting <endref> defaults to HEAD. See git-revisions(1) for details.
+.IP "--reverse, -R"
+Show commits in reverse chronological order.
+.IP "--total, -T"
+Show the total number of commits for the given pathspec.
+.SH BUGS
+To file a bug report, please submit an issue at https://github.com/nickolasburr/git-follow/issues
+.SH AUTHOR
+Written by Nickolas Burr <nickolasburr@gmail.com>
+.SH "SEE ALSO"
+.BR git-log (1),
+.BR git-diff (1),
+.BR git-config (1),
+.BR git-revisions (1)
