@@ -4,17 +4,23 @@
 
 ### Installation
 
-To use `git follow`, you need to add the executable somewhere in your `PATH` (e.g. `/usr/local/bin/git-follow`). One solution would be to use `curl` to fetch the latest version:
+To use `git follow`, you need to add the executable to your `PATH` (e.g. `/usr/local/bin`).
 
 ```shell
 cd /usr/local/bin && curl -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow
 ```
 
-And make sure the file is executable via `chmod`:
+Make sure the file is executable via `chmod`:
 
 ```shell
-# in /usr/local/bin (or wherever you put it)
+# => /usr/local/bin
 chmod u+x git-follow
+```
+
+`git-follow` also comes with a man page for reference. To install the man page:
+
+```shell
+cd /usr/share/man/man1 && curl -sSL -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow.1
 ```
 
 ### Environment Variables
@@ -24,17 +30,17 @@ You can set environment variables to customize the output of `git follow`. The f
 + `$git_log_diff`: Defaults to `side-by-side` ([`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt)). Set to `undef` to display `inline`.
 + `$git_no_pager`: Defaults to `undef`. Set to `--no-pager` to prevent Git from using the default pager (e.g. `less`) to display log entries, patch diffs, etc.
 
-### Flags
+### Options
 
-Options can be specified to provide specific commit information via the use of flags. If no flags are given, all applicable commits will be shown.
+Options can be specified to provide specific commit information. If no options are given, all applicable commits will be shown.
 
-+ `-f, --first`: Show the first commit where the file was added to the repository
-+ `-F, --func name`: Show all changes for function `name` in the given file
-+ `-l, --last [n]`: Show the last _n_ commits where the file was modified (or the last commit, if _n_ is omitted)
-+ `-L, --lines n [m]`: Show all changes between lines `n` and `m`. If only one number is given, it will serve as the starting boundary to EOF
-+ `-r, --range <startref> [<endref>]`: Show all changes between `<startref>` and `<endref>`. If `<endref>` is omitted, defaults to `HEAD`. See [git-revisions](https://git-scm.com/docs/gitrevisions#_specifying_revisions) for syntax.
-+ `-R, --reverse`: Show all changes in reverse order, from oldest to newest
-+ `-T, --total`: Show the total number of commits, as an integer
++ `--first`, `-f`: Show the first commit where Git initiated tracking of the given pathspec.
++ `--func`, `-f funcname`: Show commits which affected function `funcname` in the given pathspec. See git-log(1) for details.
++ `--last`, `-l [n]`: Show the last `n` commits where the pathspec was affected. Omitting `n` defaults to the last commit.
++ `--lines`, `-L n [m]`: Show commits which affected lines `n` and `m`. Omitting `m` defaults to EOF boundary.
++ `--range`, `-r <startref> [<endref>]`: Show commits between `<startref>` and `<endref>`. Omitting `<endref>` defaults to `HEAD`. See git-revisions(1) for details.
++ `--reverse`, `-R`: Show commits in reverse chronological order.
++ `--total`, `-T`: Show the total number of commits for the given pathspec.
 
 ### Usage
 
@@ -73,7 +79,7 @@ git follow --func funcname archive.c
 ```shell
 git follow --range master@{5} -- worktree.c
 ...
-git follow --range 5 -- worktree.c # same as above (assuming the currently checked out branch is `master`)
+git follow --range 5 -- worktree.c # same as above (assuming the currently checked out branch is master)
 ```
 
 **Display all commits which occurred between two days and one hour ago and affected `apply.c`**<sup>[1](#relative-format)</sup>
