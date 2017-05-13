@@ -7,8 +7,8 @@ None, yet.
 ### Upcoming Features
 
 + Add `--branch` flag to specify a branch other than the currently checked out branch
-+ Add `--merges` flag to also include merge commits (merge commits are suppressed, by default. see [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges))
-+ Add `--no-patch` flag to prevent displaying a patch diff (shows patch with stat, by default. see [`--patch-with-stat`](https://git-scm.com/docs/git-log#git-log---patch-with-stat))
++ Add `--merges` flag to also include merge commits (merge commits are suppressed, by default. See [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges)) for details.
++ Add `--no-patch` flag to prevent displaying a patch diff (shows patch with stat, by default. See [`--patch-with-stat`](https://git-scm.com/docs/git-log#git-log---patch-with-stat)) for details.
 + Add `--no-renames` flag to prevent following renames of a file
 + Add `--pickaxe` flag to search for a generic string in a file
 
