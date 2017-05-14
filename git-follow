@@ -45,23 +45,139 @@ my $invalid_usage_error    = <<"END_INVALID_USAGE_ERROR";
 
 END_INVALID_USAGE_ERROR
 
-# store length of `@ARGV`
+###
+### To make git-follow(1) a standalone package and avoid requiring external dependencies for use,
+### String::ShellQuote package (https://goo.gl/Fmv1PF) is inlined for convenience and portability
+###
+
+###
+### Begin String::ShellQuote package
+###
+
+sub croak {
+	require Carp;
+	goto &Carp::croak;
+}
+
+sub _shell_quote_backend {
+    my @in = @_;
+    my @err = ();
+
+    if (0) {
+	require RS::Handy;
+	print RS::Handy::data_dump(\@in);
+    }
+
+    return \@err, '' unless @in;
+
+    my $ret = '';
+    my $saw_non_equal = 0;
+    foreach (@in) {
+	if (!defined $_ or $_ eq '') {
+	    $_ = "''";
+	    next;
+	}
+
+	if (s/\x00//g) {
+	    push @err, "No way to quote string containing null (\\000) bytes";
+	}
+
+    	my $escape = 0;
+
+	# = needs quoting when it's the first element (or part of a
+	# series of such elements), as in command position it's a
+	# program-local environment setting
+
+	if (/=/) {
+	    if (!$saw_non_equal) {
+	    	$escape = 1;
+	    }
+	}
+	else {
+	    $saw_non_equal = 1;
+	}
+
+	if (m|[^\w!%+,\-./:=@^]|) {
+	    $escape = 1;
+	}
+
+	if ($escape
+		|| (!$saw_non_equal && /=/)) {
+
+	    # ' -> '\''
+    	    s/'/'\\''/g;
+
+	    # make multiple ' in a row look simpler
+	    # '\'''\'''\'' -> '"'''"'
+    	    s|((?:'\\''){2,})|q{'"} . (q{'} x (length($1) / 4)) . q{"'}|ge;
+
+	    $_ = "'$_'";
+	    s/^''//;
+	    s/''$//;
+	}
+    }
+    continue {
+	$ret .= "$_ ";
+    }
+
+    chop $ret;
+    return \@err, $ret;
+}
+
+sub shell_comment_quote {
+    return '' unless @_;
+    unless (@_ == 1) {
+	croak "Too many arguments to shell_comment_quote "
+	    	    . "(got " . @_ . " expected 1)";
+    }
+    local $_ = shift;
+    s/\n/\n#/g;
+    return $_;
+}
+
+sub shell_quote_best_effort {
+    my ($rerr, $s) = _shell_quote_backend @_;
+    return $s;
+}
+
+sub shell_quote {
+    my ($rerr, $s) = _shell_quote_backend @_;
+
+    if (@$rerr) {
+    	my %seen;
+    	@$rerr = grep { !$seen{$_}++ } @$rerr;
+	my $s = join '', map { "shell_quote(): $_\n" } @$rerr;
+	chomp $s;
+	croak $s;
+    }
+    return $s;
+}
+
+###
+### End String::ShellQuote package
+###
+
+###
+### Begin git-follow(1)
+###
+
 my $argc = @ARGV;
 
 # if `system` returns a non-zero exit status, meaning the
 # current directory is not a Git repository, kill the script
 !system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") or die "$repo_not_found_error";
 
-# if no arguments were given, emit an error and kill the script
+# if no arguments were given (e.g. `git follow` with no pathspec),
+# emit an error message with usage details and kill the script
 $argc or die "$invalid_usage_error";
 
 # store the last argument (which should be
-# the filename the user is trying to track)
-# and remove it from `@ARGV` array
-my $filename = pop @ARGV;
+# the pathspec the user is trying to track)
+# and remove it from the `@ARGV` array
+my $pathspec = pop @ARGV;
 
-# verify `$filename` is a valid pathspec
--e $filename or die "$invalid_pathspec_error";
+# run a quick check and verify `$pathspec` is a valid pathspec
+-e $pathspec or die "$invalid_pathspec_error";
 
 # flag options passed to the script
 my %flags;
@@ -114,13 +230,16 @@ my @git_log = (
 	"log"
 );
 
-# non-standard pipelines for use with non `git log` commands
+# non-standard pipelines for use with alternate
+# syntax of `git log` and non `git log` commands
 my %ns_pipelines = (
 	"total" => [
 		"git",
-		"rev-list",
-		"HEAD",
-		"--count"
+		"log",
+		"--follow",
+		"--format='%h'",
+		"--",
+		"$pathspec"
 	]
 );
 
@@ -167,7 +286,7 @@ sub get_format_rflag {
 		return "--diff-filter=A";
 	} elsif ($flag eq "func") {
 		my $funcname = shift @args;
-		return "-L^:$funcname:$filename";
+		return "-L^:$funcname:$pathspec";
 	} elsif ($flag eq "last") {
 		my $num = shift @args;
 		if (!$num) {
@@ -181,9 +300,9 @@ sub get_format_rflag {
 		my $start = @$lines[0];
 		my $end   = @$lines[1];
 		if (!$end) {
-			return "-L $start:$filename"
+			return "-L $start:$pathspec"
 		} else {
-			return "-L $start,$end:$filename";
+			return "-L $start,$end:$pathspec";
 		}
 	} elsif ($flag eq "range") {
 		my $revs       = shift @args;
@@ -210,8 +329,8 @@ sub git_follow {
 	# change the diff style, if applicable
 	unshift @git_log_flag_values, $GIT_LOG_DIFF if defined $GIT_LOG_DIFF;
 	unshift @command, @git_log, @git_log_flag_values;
-	# add pathspec separator and filename
-	push @command, $lsep, $filename;
+	# add separator and pathspec to @command array
+	push @command, $lsep, $pathspec;
 	system @command;
 }
 
@@ -249,17 +368,23 @@ sub set_aux_flag {
 	$git_log_flags{$nflag} = $rflag;
 }
 
-# set non-standard pipeline that circumvents `git log`,
-# which is essential for flag options like `--total` that
-# shouldn't be passed to `git log` but instead use
-# a completely separate command and return a value
+# set non-standard pipeline that either circumvents `git log`, or uses
+# an alternate syntax, which is essential for flag options like `--total`
 sub set_ns_pipeline {
 	my $flag = shift;
-	my $base = $ns_pipelines{$flag};
-	my @pipe = ();
-	push @pipe, @$base, $lsep, $filename;
-	system(@pipe);
-	exit 0;
+	my $pipeline = $ns_pipelines{$flag};
+	if ($flag eq "total") {
+		my $command = shell_quote @$pipeline;
+		# array of abbreviated commit hashes
+		my @hashes = `$command`;
+		my $index = 0;
+		foreach (@hashes) {
+			$index++;
+		}
+		# echo the total commits and exit successfully
+		print "$index\n";
+		exit 0;
+	}
 }
 
 # require flag options to be case-sensitive, positionally interchangeable,
@@ -285,6 +410,10 @@ GetOptions(
 
 # execute `git follow` command with flag options
 &git_follow();
+
+###
+### End git-follow(1)
+###
 
 __END__
 
