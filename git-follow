@@ -37,13 +37,26 @@ my $invalid_usage_error    = <<"END_INVALID_USAGE_ERROR";
 
 	--first,   -f                           Show the first commit where Git initiated tracking of the given pathspec.
 	--func,    -F                           Show commits which affected function `funcname' in the given pathspec. See git-log(1) for details.
-	--last,    -l [n]                       Show the last n commits where the given pathspec was affected. Omitting n defaults to the last commit.
-	--lines,   -L n [m]                     Show commits which affected lines n and m. Omitting m defaults to EOF boundary.
-	--range,   -r <startref> [<endref>]     Show commits between <startref> and <endref>. Omitting <endref> defaults to HEAD. See git-revisions(1) for details.
+	--last,    -l [n]                       Show the last `n' commits where the given pathspec was affected. Omitting `n' defaults to the last commit.
+	--lines,   -L n [m]                     Show commits which affected lines `n' and `m'. Omitting `m' defaults to EOF boundary.
+	--range,   -r <startref> [<endref>]     Show commits between `<startref>' and `<endref>'. Omitting `<endref>' defaults to HEAD. See git-revisions(1) for details.
 	--reverse, -R                           Show commits in reverse chronological order.
 	--total,   -T                           Show the total number of commits for the given pathspec.
 
 END_INVALID_USAGE_ERROR
+
+###
+### Private Subroutines
+###
+
+sub is_integer;
+sub get_revr;
+sub get_format_rflag;
+sub git_follow;
+sub rm_cflags;
+sub set_args;
+sub set_aux_flag;
+sub set_ns_pipeline;
 
 ###
 ### To make git-follow(1) a standalone package and avoid requiring external dependencies for use,
@@ -161,6 +174,7 @@ sub shell_quote {
 ### Begin git-follow(1)
 ###
 
+# number of options (arguments) given
 my $argc = @ARGV;
 
 # if `system` returns a non-zero exit status, meaning the
@@ -339,11 +353,7 @@ sub git_follow {
 sub set_args {
 	my $flag = shift;
 	my $arg  = shift;
-	if (!$arg) {
-		$flags{$flag} = $dargs{$flag};
-	} else {
-		$flags{$flag} = $arg;
-	}
+	$flags{$flag} = !$arg ? $dargs{$flag} : $arg;
 }
 
 # remove conflicting `git log` flag options so
@@ -375,7 +385,7 @@ sub set_ns_pipeline {
 	my $pipeline = $ns_pipelines{$flag};
 	if ($flag eq "total") {
 		my $command = shell_quote @$pipeline;
-		# array of abbreviated commit hashes
+		# array of abbreviated SHA-1 commit hashes
 		my @hashes = `$command`;
 		my $index = 0;
 		foreach (@hashes) {
@@ -387,8 +397,8 @@ sub set_ns_pipeline {
 	}
 }
 
-# require flag options to be case-sensitive, positionally interchangeable,
-# and able to accept a range of arguments, based on the flag
+# require options to be case-sensitive, positionally interchangeable,
+# and able to accept a range of arguments, based on flag option
 Getopt::Long::Configure(
 	'no_ignore_case',
 	'no_auto_abbrev',
@@ -397,7 +407,7 @@ Getopt::Long::Configure(
 );
 
 # get flag options and arguments passed to the script
-GetOptions(
+Getopt::Long::GetOptions(
 	\%flags,
 	'first|f',
 	'func|F=s{1,1}',
@@ -427,7 +437,7 @@ __END__
 
 =head1 VERSION
 
-	version 1.0.6
+	version 1.0.7
 
 =head1 SYNOPSIS
 
