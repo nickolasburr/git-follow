@@ -354,7 +354,6 @@ sub set_args {
 	my $flag = shift;
 	my $arg  = shift;
 	$flags{$flag} = !$arg ? $dargs{$flag} : $arg;
-	return $flags{$flag};
 }
 
 # remove conflicting `git log` flag options so
@@ -398,8 +397,8 @@ sub set_ns_pipeline {
 	}
 }
 
-# require flag options to be case-sensitive, positionally interchangeable,
-# and able to accept a range of arguments, based on the flag
+# require options to be case-sensitive, positionally interchangeable,
+# and able to accept a range of arguments, based on flag option
 Getopt::Long::Configure(
 	'no_ignore_case',
 	'no_auto_abbrev',
