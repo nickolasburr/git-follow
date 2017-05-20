@@ -1,17 +1,22 @@
 .TH git\-follow 1 "May 2017" Linux "User Manuals"
 .SH NAME
 git\-follow \- Follow lifetime changes of a pathspec in Git
+
 .SH VERSION
 version 1.0.7
+
 .SH SYNOPSIS
 .B git\-follow [OPTIONS] [--] pathspec
+
 .SH DESCRIPTION
 Follow lifetime changes of a pathspec through the history of a Git repository.
+
 .SH ENVIRONMENT
 .IP "$GIT_LOG_DIFF"
 Diff presentation mode. Defaults to side by side. Set to `undef' to display inline.
 .IP "$GIT_NO_PAGER"
 Whether Git should use a pager or not. Defaults to true. Set to `--no-pager' to prevent Git from using the default pager (e.g. less) to display commits, patch diffs, etc.
+
 .SH OPTIONS
 .IP "--first, -f"
 Show the first commit where Git initiated tracking of the given pathspec.
@@ -29,10 +34,65 @@ Show commits between <startref> and <endref>. Omitting <endref> defaults to HEAD
 Show commits in reverse chronological order.
 .IP "--total, -T"
 Show the total number of commits for the given pathspec.
+
+.SH NOTES
+Like most traditional Git builtins, git-follow also supports an optional pathspec delimiter (--) to help disambiguate options and arguments from pathspecs.
+
+.SH EXAMPLES
+Display the first commit where Git initiated tracking
+.RS
+git follow --first -- branch.c
+.RE
+
+Display the last 5 commits where pathspec was affected
+.RS
+git follow --last 5 -- Makefile
+.RE
+
+Display the last commit where lines 5 through `EOF' were affected
+.RS
+git follow --last --lines 5 -- apply.c
+.RE
+
+Display the last 3 commits where lines 10 through 15 were affected
+.RS
+git follow --last 3 --lines 10 15 -- bisect.c
+.RE
+
+Display commits where function `funcname' was affected
+.RS
+git follow --func funcname -- archive.c
+.RE
+
+Display commits in the range of fifth ancestor of master to HEAD
+.RS
+git follow --range master@{5} -- worktree.c
+.RE
+
+.RS
+--OR--
+.RE
+
+.RS
+git follow --range 5 -- worktree.c (assumes checked out branch is master)
+.RE
+
+Display commits which occurred between two days ago and one hour ago
+.RS
+git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
+.RE
+
+Display total number of commits for pathspec
+.RS
+git follow --total -- rebase.c
+.RE
+
 .SH BUGS
-To file a bug report, please submit an issue at https://github.com/nickolasburr/git-follow/issues
+https://github.com/nickolasburr/git-follow/issues
+
 .SH AUTHOR
 Written by Nickolas Burr <nickolasburr@gmail.com>
+
 .SH "SEE ALSO"
 .BR git-log (1),
 .BR git-diff (1),
