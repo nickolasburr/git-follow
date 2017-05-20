@@ -7,7 +7,7 @@
 To use `git-follow`, you need to add the executable to your `PATH` (e.g. `/usr/local/bin`).
 
 ```shell
-cd /usr/local/bin && curl -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow
+cd /usr/local/bin && curl -sSL -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow
 ```
 
 Make sure the file is executable via `chmod`:
@@ -25,7 +25,7 @@ cd /usr/share/man/man1 && curl -sSL -O https://raw.githubusercontent.com/nickola
 
 Once installed, you can view the man page by specifying the `--help` flag option: `git follow --help`.
 
-### Environment Variables
+### Environment
 
 You can set environment variables to customize the output of `git-follow`. The following are currently available:
 
@@ -76,7 +76,7 @@ git follow --last 3 --lines 10 15 composer.json
 git follow --func funcname archive.c
 ```
 
-**Only display commits which affected `worktree.c` in the range of fifth ancestor of `master` (`master@{5}`) to `master`**
+**Only display commits which affected `worktree.c` in the range of fifth ancestor of `master` (`master@{5}`) to `HEAD`**
 
 ```shell
 git follow --range master@{5} -- worktree.c
