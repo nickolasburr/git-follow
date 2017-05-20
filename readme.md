@@ -23,7 +23,7 @@ chmod u+x git-follow
 cd /usr/share/man/man1 && curl -sSL -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow.1.gz
 ```
 
-Once installed, you can view the man page by specifying the `--help` flag option: `git follow --help`.
+Once installed, you can view the man page by either specifying the `--help` option (e.g. `git follow --help`) or by typing `man git-follow`.
 
 ### Environment
 
