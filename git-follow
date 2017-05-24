@@ -3,7 +3,7 @@
 # git-follow - Follow lifetime changes of a pathspec through the history of a Git repository
 
 # Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
-# License under WTFPL (http://www.wtfpl.net/txt/copying/)
+# Licensed under WTFNMFPL (https://goo.gl/ZDUPMZ)
 
 use 5.008;
 use Getopt::Long;
