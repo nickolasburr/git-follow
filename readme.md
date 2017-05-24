@@ -2,9 +2,20 @@
 
 `git-follow` follows the lifetime changes of a pathspec (including renames) through the history of a Git repository, providing a simplified log and patch diff format.
 
-### Installation
+## Installation
 
-To use `git-follow`, you need to add the executable to your `PATH` (e.g. `/usr/local/bin`).
+You can install `git-follow` via Homebrew or manually. See the [tap repository](https://github.com/nickolasburr/homebrew-git-follow) for tap-specific information.
+
+### Homebrew
+
+```shell
+brew tap nickolasburr/git-follow
+brew install git-follow
+```
+
+### Manual
+
+Add `git-follow` to your `PATH` (e.g. `/usr/local/bin`).
 
 ```shell
 cd /usr/local/bin && curl -sSL -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow
@@ -25,14 +36,14 @@ cd /usr/share/man/man1 && curl -sSL -O https://raw.githubusercontent.com/nickola
 
 Once installed, you can view the man page by either specifying the `--help` option (e.g. `git follow --help`) or by typing `man git-follow`.
 
-### Environment
+## Environment
 
 You can set environment variables to customize the output of `git-follow`. The following are currently available:
 
 + `$GIT_LOG_DIFF`: Diff presentation mode. Defaults to side by side (see [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt) for details). Set to `undef` to display inline.
 + `$GIT_NO_PAGER`: Whether Git should use a pager or not. Defaults to true. Set to `--no-pager` to prevent Git from using the default pager (e.g. less) to display commits, patch diffs, etc.
 
-### Options
+## Options
 
 Options can be specified to provide more refined information. If no options are given, all applicable commits will be shown.
 
@@ -44,11 +55,11 @@ Options can be specified to provide more refined information. If no options are 
 + `--reverse`, `-R`: Show commits in reverse chronological order.
 + `--total`, `-T`: Show the total number of commits for the given pathspec.
 
-### Notes
+## Notes
 
 Like most traditional Git builtins, `git-follow` also supports an optional pathspec delimiter (`--`) to help disambiguate options and arguments from pathspecs.
 
-### Examples
+## Examples
 
 **Display the first commit where Git initiated tracking of `branch.c`**
 
