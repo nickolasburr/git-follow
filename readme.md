@@ -48,7 +48,7 @@ You can set environment variables to customize the output of `git-follow`. The f
 Options can be specified to provide more refined information. If no options are given, all applicable commits will be shown.
 
 + `--first`, `-f`: Show the first commit where Git initiated tracking of the given pathspec.
-+ `--func`, `-f funcname`: Show commits which affected function `funcname` in the given pathspec. See [git-log(1)](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) for details.
++ `--func`, `-F funcname`: Show commits which affected function `funcname` in the given pathspec. See [git-log(1)](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) for details.
 + `--last`, `-l [n]`: Show the last `n` commits where the pathspec was affected. Omitting `n` defaults to the last commit.
 + `--lines`, `-L n [m]`: Show commits which affected lines `n` and `m`. Omitting `m` defaults to EOF boundary.
 + `--range`, `-r <startref> [<endref>]`: Show commits between `<startref>` and `<endref>`. Omitting `<endref>` defaults to `HEAD`. See [git-revisions(1)](https://git-scm.com/docs/gitrevisions) for details.
