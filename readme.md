@@ -47,6 +47,7 @@ You can set environment variables to customize the output of `git-follow`. The f
 
 Options can be specified to provide more refined information. If no options are given, all applicable commits will be shown.
 
++ `--branch`, `-b`: Show commits specific to a (local) branch.
 + `--first`, `-f`: Show the first commit where Git initiated tracking of the given pathspec.
 + `--func`, `-F funcname`: Show commits which affected function `funcname` in the given pathspec. See [git-log(1)](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) for details.
 + `--last`, `-l [n]`: Show the last `n` commits where the pathspec was affected. Omitting `n` defaults to the last commit.
@@ -60,6 +61,12 @@ Options can be specified to provide more refined information. If no options are 
 Like most traditional Git builtins, `git-follow` also supports an optional pathspec delimiter (`--`) to help disambiguate options and arguments from pathspecs.
 
 ## Examples
+
+**Display commits on branch `topic` where `blame.c` was affected**
+
+```shell
+git follow --branch topic -- blame.c
+```
 
 **Display the first commit where Git initiated tracking of `branch.c`**
 

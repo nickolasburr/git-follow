@@ -3,7 +3,7 @@
 git\-follow \- Follow lifetime changes of a pathspec in Git
 
 .SH VERSION
-version 1.0.7
+version 1.0.8
 
 .SH SYNOPSIS
 .B git\-follow [OPTIONS] [--] pathspec
@@ -18,6 +18,8 @@ Diff presentation mode. Defaults to side by side. Set to `undef' to display inli
 Whether Git should use a pager or not. Defaults to true. Set to `--no-pager' to prevent Git from using the default pager (e.g. less) to display commits, patch diffs, etc.
 
 .SH OPTIONS
+.IP "--branch, -b"
+Show commits specific to a (local) branch.
 .IP "--first, -f"
 Show the first commit where Git initiated tracking of the given pathspec.
 .IP "--func, -F funcname"
@@ -39,6 +41,11 @@ Show the total number of commits for the given pathspec.
 Like most traditional Git builtins, git-follow also supports an optional pathspec delimiter (--) to help disambiguate options and arguments from pathspecs.
 
 .SH EXAMPLES
+Display commits where pathspec was affected on branch 'topic'
+.RS
+git follow --branch topic -- blame.c
+.RE
+
 Display the first commit where Git initiated tracking
 .RS
 git follow --first -- branch.c
@@ -94,7 +101,9 @@ https://github.com/nickolasburr/git-follow/issues
 Written by Nickolas Burr <nickolasburr@gmail.com>
 
 .SH "SEE ALSO"
-.BR git-log (1),
-.BR git-diff (1),
-.BR git-config (1),
-.BR git-revisions (1)
+.BR git-branch(1),
+.BR git-check-ref-format(1),
+.BR git-config(1),
+.BR git-diff(1),
+.BR git-log(1),
+.BR git-revisions(1)
