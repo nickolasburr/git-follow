@@ -390,8 +390,10 @@ sub set_aux_flag {
 sub set_branchname {
 	my ($flag, $refname) = @_;
 	my $branches = `git branch --list`;
-	# filter the asterisk from `git branch --list`
+	# filter asterisk from `git branch --list`
 	$branches =~ s/\*//gi;
+	# filter escape codes from `git branch --list`
+	$branches =~ s/\033\[\d*(;\d*)*m//g;
 
 	# split the branch refnames into an array
 	my @refnames = split "\n", $branches;
