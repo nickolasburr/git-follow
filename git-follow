@@ -11,54 +11,6 @@ use strict;
 use warnings;
 
 ###
-### Environment Variables
-###
-
-# optionally set default view for diffs
-# shown in `git log` (defaults to inline)
-my $GIT_LOG_DIFF = "--color-words";
-
-# optionally set `--no-pager` flag option,
-# and Git won't use a pager (e.g. less) to
-# display commits, patch diffs, etc.
-my $GIT_NO_PAGER = undef;
-
-###
-### Error Notices
-###
-
-my $repo_not_found_error   = "Not a Git repository, exiting the script";
-my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
-my $invalid_usage_error    = <<"END_INVALID_USAGE_ERROR";
-
-  Usage: git follow [OPTIONS] [--] pathspec
-
-  Flag options:
-
-	--first,   -f                           Show the first commit where Git initiated tracking of the given pathspec.
-	--func,    -F                           Show commits which affected function `funcname' in the given pathspec. See git-log(1) for details.
-	--last,    -l [n]                       Show the last `n' commits where the given pathspec was affected. Omitting `n' defaults to the last commit.
-	--lines,   -L n [m]                     Show commits which affected lines `n' and `m'. Omitting `m' defaults to EOF boundary.
-	--range,   -r <startref> [<endref>]     Show commits between `<startref>' and `<endref>'. Omitting `<endref>' defaults to HEAD. See git-revisions(1) for details.
-	--reverse, -R                           Show commits in reverse chronological order.
-	--total,   -T                           Show the total number of commits for the given pathspec.
-
-END_INVALID_USAGE_ERROR
-
-###
-### Private Subroutines
-###
-
-sub is_integer;
-sub get_revr;
-sub get_format_rflag;
-sub git_follow;
-sub rm_cflags;
-sub set_args;
-sub set_aux_flag;
-sub set_ns_pipeline;
-
-###
 ### To make git-follow(1) a standalone package and avoid requiring external dependencies for use,
 ### String::ShellQuote package (https://goo.gl/Fmv1PF) is inlined for convenience and portability
 ###
@@ -174,6 +126,56 @@ sub shell_quote {
 ### Begin git-follow(1)
 ###
 
+###
+### Environment Variables
+###
+
+# optionally set default view for diffs
+# shown in `git log` (defaults to inline)
+my $GIT_LOG_DIFF = "--color-words";
+
+# optionally set `--no-pager` flag option,
+# and Git won't use a pager (e.g. less) to
+# display commits, patch diffs, etc.
+my $GIT_NO_PAGER = undef;
+
+###
+### User Notices, Errors
+###
+
+my $repo_not_found_error   = "Not a Git repository, exiting the script";
+my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
+my $invalid_refname_error  = "Not a valid refname, exiting the script";
+my $invalid_usage_error    = <<"END_INVALID_USAGE_ERROR";
+
+  Usage: git follow [OPTIONS] [--] pathspec
+
+  Flag options:
+
+	--first,   -f                           Show the first commit where Git initiated tracking of the given pathspec.
+	--func,    -F                           Show commits which affected function `funcname' in the given pathspec. See git-log(1) for details.
+	--last,    -l [n]                       Show the last `n' commits where the given pathspec was affected. Omitting `n' defaults to the last commit.
+	--lines,   -L n [m]                     Show commits which affected lines `n' and `m'. Omitting `m' defaults to EOF boundary.
+	--range,   -r <startref> [<endref>]     Show commits between `<startref>' and `<endref>'. Omitting `<endref>' defaults to HEAD. See git-revisions(1) for details.
+	--reverse, -R                           Show commits in reverse chronological order.
+	--total,   -T                           Show the total number of commits for the given pathspec.
+
+END_INVALID_USAGE_ERROR
+
+###
+### git-follow(1) Private Subroutines
+###
+
+sub is_integer;
+sub get_revr;
+sub get_format_rflag;
+sub git_follow;
+sub rm_cflags;
+sub set_args;
+sub set_aux_flag;
+sub set_branchname;
+sub set_ns_pipeline;
+
 # number of options (arguments) given
 my $argc = @ARGV;
 
@@ -190,8 +192,13 @@ $argc or die "$invalid_usage_error";
 # and remove it from the `@ARGV` array
 my $pathspec = pop @ARGV;
 
+# target branch refname (when `--branch` option is specified)
+my $branchname = undef;
+
 # run a quick check and verify `$pathspec` is a valid pathspec
--e $pathspec or die "$invalid_pathspec_error";
+if (! -e $pathspec) {
+	die "$invalid_pathspec_error";
+}
 
 # flag options passed to the script
 my %flags;
@@ -252,7 +259,7 @@ my %ns_pipelines = (
 		"log",
 		"--follow",
 		"--format='%h'",
-		"--",
+		"$lsep",
 		"$pathspec"
 	]
 );
@@ -343,17 +350,10 @@ sub git_follow {
 	# change the diff style, if applicable
 	unshift @git_log_flag_values, $GIT_LOG_DIFF if defined $GIT_LOG_DIFF;
 	unshift @command, @git_log, @git_log_flag_values;
-	# add separator and pathspec to @command array
+	# add branch refname, if given as an argument
+	push @command, $branchname if defined $branchname;
 	push @command, $lsep, $pathspec;
 	system @command;
-}
-
-# set argument value(s) for `$flag`,
-# whether given to the flag or default
-sub set_args {
-	my $flag = shift;
-	my $arg  = shift;
-	$flags{$flag} = !$arg ? $dargs{$flag} : $arg;
 }
 
 # remove conflicting `git log` flag options so
@@ -367,6 +367,14 @@ sub rm_cflags {
 	}
 }
 
+# set argument value(s) for `$flag`,
+# whether given to the flag or default
+sub set_args {
+	my $flag = shift;
+	my $arg  = shift;
+	$flags{$flag} = !$arg ? $dargs{$flag} : $arg;
+}
+
 # add flag to `%git_log_flags` hash
 sub set_aux_flag {
 	my $nflag = shift;
@@ -378,6 +386,28 @@ sub set_aux_flag {
 	$git_log_flags{$nflag} = $rflag;
 }
 
+# update `$branchname` if a valid branch refname was given
+sub set_branchname {
+	my ($flag, $refname) = @_;
+	my $branches = `git branch --list`;
+	# filter the asterisk from `git branch --list`
+	$branches =~ s/\*//gi;
+
+	# split the branch refnames into an array
+	my @refnames = split "\n", $branches;
+	# then trim any whitespace from them
+	@refnames = grep { $_ =~ s/^\s+//; } @refnames;
+
+	# if `$refname` is a valid local branch,
+	# update `$branchname` with the refname,
+	# otherwise, emit an error and exit
+	if (grep /^$refname$/, @refnames) {
+		$branchname = $refname;
+	} else {
+		die "$invalid_refname_error";
+	}
+}
+
 # set non-standard pipeline that either circumvents `git log`, or uses
 # an alternate syntax, which is essential for flag options like `--total`
 sub set_ns_pipeline {
@@ -385,14 +415,11 @@ sub set_ns_pipeline {
 	my $pipeline = $ns_pipelines{$flag};
 	if ($flag eq "total") {
 		my $command = shell_quote @$pipeline;
+
 		# array of abbreviated SHA-1 commit hashes
 		my @hashes = `$command`;
-		my $index = 0;
-		foreach (@hashes) {
-			$index++;
-		}
-		# echo the total commits and exit successfully
-		print "$index\n";
+		my $total  = @hashes;
+		print "$total\n";
 		exit 0;
 	}
 }
@@ -409,13 +436,14 @@ Getopt::Long::Configure(
 # get flag options and arguments passed to the script
 Getopt::Long::GetOptions(
 	\%flags,
+	'branch|b=s{1,1}'  => \&set_branchname,
 	'first|f',
 	'func|F=s{1,1}',
-	'last|l=i{0,1}' => \&set_args,
+	'last|l=i{0,1}'    => \&set_args,
 	'lines|L=i@{1,2}',
 	'range|r=s@{1,2}',
-	'reverse|R'     => \&set_aux_flag,
-	'total|T'       => \&set_ns_pipeline
+	'reverse|R'        => \&set_aux_flag,
+	'total|T'          => \&set_ns_pipeline
 ) or die "$invalid_usage_error";
 
 # execute `git follow` command with flag options
@@ -437,7 +465,7 @@ __END__
 
 =head1 VERSION
 
-	version 1.0.7
+	version 1.0.8
 
 =head1 SYNOPSIS
 
@@ -448,6 +476,9 @@ __END__
 	Follow lifetime changes of a pathspec through the history of a Git repository.
 
 =head1 OPTIONS
+
+	--branch, -b
+		Show commits specific to a (local) branch.
 
 	--first, -f
 		Show the first commit where Git initiated tracking of the given pathspec.
@@ -472,9 +503,12 @@ __END__
 
 =head1 NOTES
 
-Like most traditional Git builtins, git-follow also supports an optional pathspec delimiter (--) to help disambiguate options and arguments from pathspecs.
+	Like most traditional Git builtins, git-follow also supports an optional pathspec delimiter (--) to help disambiguate options and arguments from pathspecs.
 
 =head1 EXAMPLES
+
+	Display commits where pathspec was affected on branch 'topic'
+		git follow --branch topic -- blame.c
 
 	Display the first commit where Git initiated tracking
 		git follow --first -- branch.c
@@ -514,6 +548,6 @@ Like most traditional Git builtins, git-follow also supports an optional pathspe
 
 =head1 SEE ALSO
 
-	git-log(1), git-diff(1), git-config(1), git-revisions(1)
+	git-branch(1), git-check-ref-format(1), git-config(1), git-diff(1), git-log(1), git-revisions(1)
 
 =cut
