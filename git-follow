@@ -132,7 +132,7 @@ sub shell_quote {
 
 # optionally set default view for diffs
 # shown in `git log` (defaults to inline)
-my $GIT_LOG_DIFF = "--color-words";
+my $GIT_LOG_DIFF = undef;
 
 # optionally set `--no-pager` flag option,
 # and Git won't use a pager (e.g. less) to
@@ -148,17 +148,19 @@ my $invalid_pathspec_error = "Not a valid pathspec, exiting the script";
 my $invalid_refname_error  = "Not a valid refname, exiting the script";
 my $invalid_usage_error    = <<"END_INVALID_USAGE_ERROR";
 
-  Usage: git follow [OPTIONS] [--] pathspec
+	Usage: git follow [OPTIONS] [--] pathspec
 
-  Flag options:
+	Options:
 
-	--first,   -f                           Show the first commit where Git initiated tracking of the given pathspec.
-	--func,    -F                           Show commits which affected function `funcname' in the given pathspec. See git-log(1) for details.
-	--last,    -l [n]                       Show the last `n' commits where the given pathspec was affected. Omitting `n' defaults to the last commit.
+	--branch,  -b                           Show commits specific to a branch.
+	--first,   -f                           Show the first commit where Git initiated tracking of the pathspec.
+	--func,    -F                           Show commits which affected function `funcname' in the pathspec.
+	--last,    -l [n]                       Show the last `n' commits where the pathspec was affected. Omitting `n' defaults to the last commit.
 	--lines,   -L n [m]                     Show commits which affected lines `n' and `m'. Omitting `m' defaults to EOF boundary.
-	--range,   -r <startref> [<endref>]     Show commits between `<startref>' and `<endref>'. Omitting `<endref>' defaults to HEAD. See git-revisions(1) for details.
+	--range,   -r <startref> [<endref>]     Show commits between `<startref>' and `<endref>'. Omitting `<endref>' defaults to HEAD.
 	--reverse, -R                           Show commits in reverse chronological order.
-	--total,   -T                           Show the total number of commits for the given pathspec.
+	--tag,     -t                           Show commits specific to a tag.
+	--total,   -T                           Show the total number of commits for the pathspec.
 
 END_INVALID_USAGE_ERROR
 
@@ -194,6 +196,9 @@ my $pathspec = pop @ARGV;
 
 # target branch refname (when `--branch` option is specified)
 my $branchname = undef;
+
+# target tag refname (when `--tag` option is specified)
+my $tagname = undef;
 
 # run a quick check and verify `$pathspec` is a valid pathspec
 if (! -e $pathspec) {
@@ -410,6 +415,29 @@ sub set_branchname {
 	}
 }
 
+# set `$tagname` if a valid tag refname was given
+sub set_tagname {
+	my ($flag, $refname) = @_;
+	my $tagnames = `git tag --list`;
+
+	# filter asterisk from `git tag --list`
+	$tagnames =~ s/\*//gi;
+	# filter escape codes from `git tag --list`
+	$tagnames =~ s/\033\[\d*(;\d*)*m//g;
+
+	# split tag refnames into an array
+	my @refnames = split "\n", $tagnames;
+
+	# if `$refname` is a valid local tag,
+	# update `$tagname` with the refname,
+	# otherwise, emit an error and exit
+	if (grep /^$refname$/, @refnames) {
+		$tagname = $refname;
+	} else {
+		die "$invalid_refname_error";
+	}
+}
+
 # set non-standard pipeline that either circumvents `git log`, or uses
 # an alternate syntax, which is essential for flag options like `--total`
 sub set_ns_pipeline {
@@ -445,6 +473,7 @@ Getopt::Long::GetOptions(
 	'lines|L=i@{1,2}',
 	'range|r=s@{1,2}',
 	'reverse|R'        => \&set_aux_flag,
+	'tag|t=s{1,1}'     => \&set_tagname,
 	'total|T'          => \&set_ns_pipeline
 ) or die "$invalid_usage_error";
 
