@@ -340,27 +340,6 @@ sub get_format_rflag {
 	}
 }
 
-# map to `git log` flag options, format the
-# command and pass it to `system` builtin
-sub git_follow {
-	my @command = ();
-	# iterate through flag options and arguments (if applicable)
-	while (my ($flag, $args) = each %flags) {
-		my $rflag = &get_format_rflag($flag, $args);
-		push @command, $rflag;
-	}
-	# update `@git_log_flag_values` with
-	# corresponding `git log` flag options
-	@git_log_flag_values = values %git_log_flags;
-	# change the diff style, if applicable
-	unshift @git_log_flag_values, $GIT_LOG_DIFF if defined $GIT_LOG_DIFF;
-	unshift @command, @git_log, @git_log_flag_values;
-	# add branch refname, if given as an argument
-	push @command, $branchname if defined $branchname;
-	push @command, $lsep, $pathspec;
-	system @command;
-}
-
 # remove conflicting `git log` flag options so
 # they're not passed to `system`, causing errors
 sub rm_cflags {
@@ -395,12 +374,13 @@ sub set_aux_flag {
 sub set_branchname {
 	my ($flag, $refname) = @_;
 	my $branches = `git branch --list`;
+
 	# filter asterisk from `git branch --list`
 	$branches =~ s/\*//gi;
 	# filter escape codes from `git branch --list`
 	$branches =~ s/\033\[\d*(;\d*)*m//g;
 
-	# split the branch refnames into an array
+	# split branch refnames into an array
 	my @refnames = split "\n", $branches;
 	# then trim any whitespace from them
 	@refnames = grep { $_ =~ s/^\s+//; } @refnames;
@@ -477,8 +457,30 @@ Getopt::Long::GetOptions(
 	'total|T'          => \&set_ns_pipeline
 ) or die "$invalid_usage_error";
 
-# execute `git follow` command with flag options
-&git_follow();
+# map to `git log` flag options, format the
+# command and pass it to `system` builtin
+my @command = ();
+
+# iterate through flag options and arguments (if applicable)
+while (my ($flag, $args) = each %flags) {
+	my $rflag = &get_format_rflag($flag, $args);
+	push @command, $rflag;
+}
+
+# update `@git_log_flag_values` with
+# corresponding `git log` flag options
+@git_log_flag_values = values %git_log_flags;
+
+# change the diff style, if applicable
+unshift @git_log_flag_values, $GIT_LOG_DIFF if defined $GIT_LOG_DIFF;
+unshift @command, @git_log, @git_log_flag_values;
+
+# add branch refname, if given as an argument
+push @command, $branchname if defined $branchname;
+push @command, $tagname if defined $tagname;
+push @command, $lsep, $pathspec;
+
+system @command;
 
 ###
 ### End git-follow(1)
