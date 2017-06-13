@@ -511,7 +511,7 @@ __END__
 =head1 OPTIONS
 
 	--branch, -b
-		Show commits specific to a (local) branch.
+		Show commits specific to a branch.
 
 	--first, -f
 		Show the first commit where Git initiated tracking of the given pathspec.
@@ -530,6 +530,9 @@ __END__
 
 	--reverse, -R
 		Show commits in reverse chronological order.
+
+	--tag, -t
+		Show commits specific to a tag.
 
 	--total, -T
 		Show the total number of commits for the given pathspec.
@@ -567,6 +570,9 @@ __END__
 
 	Display commits which occurred between two days ago and one hour ago
 		git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
+
+	Display commits where pathspec was affected in tag v1.5.3
+		git follow --tag v1.5.3 -- graph.c
 
 	Display total number of commits for pathspec
 		git follow --total -- rebase.c
