@@ -40,65 +40,66 @@ Once installed, you can view the man page by either specifying the `--help` opti
 
 You can set environment variables to customize the output of `git-follow`. The following are currently available:
 
-+ `$GIT_LOG_DIFF`: Diff presentation mode. Defaults to side by side (see [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt) for details). Set to `undef` to display inline.
-+ `$GIT_NO_PAGER`: Whether Git should use a pager or not. Defaults to true. Set to `--no-pager` to prevent Git from using the default pager (e.g. less) to display commits, patch diffs, etc.
++ `$GIT_LOG_DIFF`: Diff presentation mode. Defaults to inline. Set to `--color-words` to display side by side. See [`git log --color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt) for details.
++ `$GIT_NO_PAGER`: If Git should use a pager. Defaults to true. Set to `--no-pager` to prevent Git from using the default pager.
 
 ## Options
 
 Options can be specified to provide more refined information. If no options are given, all applicable commits will be shown.
 
-+ `--branch`, `-b`: Show commits specific to a (local) branch.
-+ `--first`, `-f`: Show the first commit where Git initiated tracking of the given pathspec.
-+ `--func`, `-F funcname`: Show commits which affected function `funcname` in the given pathspec. See [git-log(1)](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) for details.
-+ `--last`, `-l [n]`: Show the last `n` commits where the pathspec was affected. Omitting `n` defaults to the last commit.
-+ `--lines`, `-L n [m]`: Show commits which affected lines `n` and `m`. Omitting `m` defaults to EOF boundary.
-+ `--range`, `-r <startref> [<endref>]`: Show commits between `<startref>` and `<endref>`. Omitting `<endref>` defaults to `HEAD`. See [git-revisions(1)](https://git-scm.com/docs/gitrevisions) for details.
++ `--branch`, `-b` `<branchref>`: Show commits specific to a branch.
++ `--first`, `-f`: Show first commit where Git initiated tracking of pathspec.
++ `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`git-log -L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) for details.
++ `--last`, `-l` `[<count>]`: Show last `<count>` commits where pathspec was affected. Omitting `<count>` defaults to last commit.
++ `--lines`, `-L` `<start>` `[<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to EOF boundary.
++ `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See [git-revisions(1)](https://git-scm.com/docs/gitrevisions) for details.
 + `--reverse`, `-R`: Show commits in reverse chronological order.
-+ `--total`, `-T`: Show the total number of commits for the given pathspec.
++ `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
++ `--total`, `-T`: Show total number of commits for pathspec.
 
 ## Notes
 
-Like most traditional Git builtins, `git-follow` also supports an optional pathspec delimiter (`--`) to help disambiguate options and arguments from pathspecs.
+Like most standard Git builtins, `git-follow` supports an optional pathspec delimiter (`--`) to help disambiguate options and arguments from pathspecs.
 
 ## Examples
 
-**Display commits on branch `topic` where `blame.c` was affected**
+**Display commits on branch `topic` which affected `blame.c`**
 
 ```shell
 git follow --branch topic -- blame.c
 ```
 
-**Display the first commit where Git initiated tracking of `branch.c`**
+**Display first commit where Git initiated tracking of `branch.c`**
 
 ```shell
 git follow --first -- branch.c
 ```
 
-**Display the last 5 commits where `Makefile` was affected** (see [`git log --diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) for details)
+**Display last 5 commits which affected `column.c`** (See [`git log --diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) for details)
 
 ```shell
-git follow --last 5 -- Makefile
+git follow --last 5 -- column.c
 ```
 
-**Display the last commit where lines 5 through `EOF` were affected in `diff.c`**
+**Display last commit where lines 5 through `EOF` were affected in `diff.c`**
 
 ```shell
 git follow --last --lines 5 -- diff.c
 ```
 
-**Display the last 3 commits where lines 10 through 15 were affected in `bisect.c`**
+**Display last 3 commits where lines 10 through 15 were affected in `bisect.c`**
 
 ```shell
 git follow --last 3 --lines 10 15 -- bisect.c
 ```
 
-**Display all commits where function `funcname` was affected in `archive.c`**
+**Display commits where function `funcname` was affected in `archive.c`**
 
 ```shell
 git follow --func funcname -- archive.c
 ```
 
-**Display commits which affected `worktree.c`, in the range of fifth ancestor of `master` (`master@{5}`) to `HEAD`**
+**Display commits in range `fifth ancestor of master` (`master@{5}`) to `HEAD` which affected `worktree.c`**
 
 ```shell
 git follow --range master@{5} -- worktree.c
@@ -106,13 +107,19 @@ git follow --range master@{5} -- worktree.c
 git follow --range 5 -- worktree.c # same as above (assuming the currently checked out branch is master)
 ```
 
-**Display commits which occurred between two days ago and one hour ago, and affected `apply.c`**<sup>[1](#relative-format)</sup>
+**Display commits in range `2 days ago` and `1 hour ago` which affected `apply.c`**<sup>[1](#relative-format)</sup>
 
 ```shell
 git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
 ```
 
-**Display the total number of commits (as an integer) which affected `rebase.c`**
+**Display commits up to tag `v1.5.3` which affected `graph.c`**
+
+```shell
+git follow --tag v1.5.3 -- graph.c
+```
+
+**Display total number of commits which affected `rebase.c`**
 
 ```shell
 git follow --total -- rebase.c
