@@ -25,97 +25,97 @@ sub croak {
 }
 
 sub _shell_quote_backend {
-    my @in = @_;
-    my @err = ();
+	my @in = @_;
+	my @err = ();
 
-    if (0) {
-	require RS::Handy;
-	print RS::Handy::data_dump(\@in);
-    }
-
-    return \@err, '' unless @in;
-
-    my $ret = '';
-    my $saw_non_equal = 0;
-    foreach (@in) {
-	if (!defined $_ or $_ eq '') {
-	    $_ = "''";
-	    next;
+	if (0) {
+		require RS::Handy;
+		print RS::Handy::data_dump(\@in);
 	}
 
-	if (s/\x00//g) {
-	    push @err, "No way to quote string containing null (\\000) bytes";
+	return \@err, '' unless @in;
+
+	my $ret = '';
+	my $saw_non_equal = 0;
+
+	foreach (@in) {
+		if (!defined $_ or $_ eq '') {
+			$_ = "''";
+			next;
+		}
+
+		if (s/\x00//g) {
+			push @err, "No way to quote string containing null (\\000) bytes";
+		}
+
+		my $escape = 0;
+
+		# = needs quoting when it's the first element (or part of a
+		# series of such elements), as in command position it's a
+		# program-local environment setting
+
+		if (/=/) {
+			if (!$saw_non_equal) {
+				$escape = 1;
+			}
+		} else {
+			$saw_non_equal = 1;
+		}
+
+		if (m|[^\w!%+,\-./:=@^]|) {
+				$escape = 1;
+		}
+
+		if ($escape || (!$saw_non_equal && /=/)) {
+			# ' -> '\''
+			s/'/'\\''/g;
+
+			# make multiple ' in a row look simpler
+			# '\'''\'''\'' -> '"'''"'
+			s|((?:'\\''){2,})|q{'"} . (q{'} x (length($1) / 4)) . q{"'}|ge;
+
+			$_ = "'$_'";
+			s/^''//;
+			s/''$//;
+		}
 	}
 
-    	my $escape = 0;
-
-	# = needs quoting when it's the first element (or part of a
-	# series of such elements), as in command position it's a
-	# program-local environment setting
-
-	if (/=/) {
-	    if (!$saw_non_equal) {
-	    	$escape = 1;
-	    }
-	}
-	else {
-	    $saw_non_equal = 1;
+	continue {
+		$ret .= "$_ ";
 	}
 
-	if (m|[^\w!%+,\-./:=@^]|) {
-	    $escape = 1;
-	}
-
-	if ($escape
-		|| (!$saw_non_equal && /=/)) {
-
-	    # ' -> '\''
-    	    s/'/'\\''/g;
-
-	    # make multiple ' in a row look simpler
-	    # '\'''\'''\'' -> '"'''"'
-    	    s|((?:'\\''){2,})|q{'"} . (q{'} x (length($1) / 4)) . q{"'}|ge;
-
-	    $_ = "'$_'";
-	    s/^''//;
-	    s/''$//;
-	}
-    }
-    continue {
-	$ret .= "$_ ";
-    }
-
-    chop $ret;
-    return \@err, $ret;
+	chop $ret;
+	return \@err, $ret;
 }
 
 sub shell_comment_quote {
-    return '' unless @_;
-    unless (@_ == 1) {
-	croak "Too many arguments to shell_comment_quote "
-	    	    . "(got " . @_ . " expected 1)";
-    }
-    local $_ = shift;
-    s/\n/\n#/g;
-    return $_;
+	return '' unless @_;
+
+	unless (@_ == 1) {
+		croak "Too many arguments to shell_comment_quote " . "(got " . @_ . " expected 1)";
+	}
+
+	local $_ = shift;
+	s/\n/\n#/g;
+	return $_;
 }
 
 sub shell_quote_best_effort {
-    my ($rerr, $s) = _shell_quote_backend @_;
-    return $s;
+	my ($rerr, $s) = _shell_quote_backend @_;
+	return $s;
 }
 
 sub shell_quote {
-    my ($rerr, $s) = _shell_quote_backend @_;
+	my ($rerr, $s) = _shell_quote_backend @_;
 
-    if (@$rerr) {
-    	my %seen;
-    	@$rerr = grep { !$seen{$_}++ } @$rerr;
-	my $s = join '', map { "shell_quote(): $_\n" } @$rerr;
-	chomp $s;
-	croak $s;
-    }
-    return $s;
+	if (@$rerr) {
+		my %seen;
+		@$rerr = grep { !$seen{$_}++ } @$rerr;
+		my $s  = join '', map { "shell_quote(): $_\n" } @$rerr;
+		chomp $s;
+		croak $s;
+	}
+	return $s;
 }
 
 ###
