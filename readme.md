@@ -9,7 +9,7 @@ You can install `git-follow` via Homebrew or manually. See the [tap repository](
 ### Homebrew
 
 ```shell
-brew tap nickolasburr/git-follow
+brew tap nickolasburr/nickolasburr
 brew install git-follow
 ```
 
