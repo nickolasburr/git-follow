@@ -1,14 +1,14 @@
 #!/usr/bin/env perl
 
-# git-follow - Follow lifetime changes of a pathspec through the history of a Git repository
+# git-follow - Follow lifetime changes of a pathspec in Git.
 
 # Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
 # Licensed under WTFNMFPL (https://goo.gl/ZDUPMZ)
 
 use 5.008;
-use Getopt::Long;
 use strict;
 use warnings;
+use Getopt::Long;
 
 ###
 ### To make git-follow(1) a standalone package and avoid requiring external dependencies for use,
@@ -147,7 +147,7 @@ my $repo_not_found_error    = "Not a Git repository.";
 my $invalid_pathspec_error  = "Not a valid pathspec.";
 my $invalid_branchref_error = "Not a valid branch.";
 my $invalid_tagref_error    = "Not a valid tag.";
-my $invalid_refspec_combo   = "Options --branch and --tag cannot be combined.";
+my $invalid_refspec_combo   = "Only one --branch or one --tag option can be specified at a time.";
 my $invalid_usage_error     = <<"END_INVALID_USAGE_ERROR";
 
 	Usage: git follow [OPTIONS] [--] pathspec
@@ -167,7 +167,7 @@ my $invalid_usage_error     = <<"END_INVALID_USAGE_ERROR";
 END_INVALID_USAGE_ERROR
 
 ###
-### git-follow(1) Private Subroutines
+### git-follow(1) subroutines
 ###
 
 sub is_integer;
@@ -278,6 +278,7 @@ if (defined $GIT_NO_PAGER) {
 # Determine if value is an integer
 sub is_integer {
 	my $num = shift;
+
 	if (defined $num) {
 		return $num =~ /^\d+$/ ? 1 : 0;
 	} else {
@@ -302,20 +303,23 @@ sub get_revr {
 	# directly to `--range` (e.g. --range master 3 5)
 	$revr_start = "\@{$revr_start}" if &is_integer($revr_start);
 	$revr_end   = "\@{$revr_end}" if &is_integer($revr_end);
+
 	return "$revr_start..$revr_end";
 }
 
 # Format the `git log` flag with argument(s) given
 sub get_format_rflag {
-	my $flag = shift;
-	my @args = shift;
+	my ($flag, @args) = @_;
+
 	if ($flag eq "first") {
 		return "--diff-filter=A";
 	} elsif ($flag eq "func") {
 		my $funcname = shift @args;
+
 		return "-L^:$funcname:$pathspec";
 	} elsif ($flag eq "last") {
 		my $num = shift @args;
+
 		if (!$num) {
 			return "--max-count=1";
 		} else {
@@ -337,6 +341,7 @@ sub get_format_rflag {
 		my $revs       = shift @args;
 		my $revr_start = @$revs[0];
 		my $revr_end   = @$revs[1];
+
 		return &get_revr($revr_start, $revr_end);
 	} elsif ($flag eq "reverse") {
 		return "--reverse";
@@ -348,6 +353,7 @@ sub get_format_rflag {
 sub rm_cflags {
 	my $flag    = shift;
 	my $cnflags = $cflags{$flag};
+
 	foreach (values @$cnflags) {
 		my $cnflag = shift @$cnflags;
 		delete $git_log_flags{$cnflag};
@@ -357,8 +363,10 @@ sub rm_cflags {
 # Set argument value(s) for `$flag`,
 # whether given to the flag or default
 sub set_args {
-	my $flag = shift;
-	my $arg  = shift;
+	my ($flag, $arg) = @_;
+
+	# Update %flags hash with either the given option
+	# argument or with the default option argument
 	$flags{$flag} = !$arg ? $dargs{$flag} : $arg;
 }
 
@@ -367,13 +375,14 @@ sub set_aux_flag {
 	my $nflag = shift;
 	# Get formatted `git log` flag
 	my $rflag = &get_format_rflag($nflag);
+
 	# Remove conflicting flags
 	&rm_cflags($nflag);
 	# Add auxilary flag to `%git_log_flags` hash
 	$git_log_flags{$nflag} = $rflag;
 }
 
-# Set `$refspec` to the ref given via --branch or --tag
+# Update package-level `$refspec` with ref given via --branch or --tag
 sub set_refspec {
 	# If `$refspec` is already defined, notify the user and emit an error,
 	# as you can't give both `--branch` and `--tag` options simultaneously
@@ -381,28 +390,37 @@ sub set_refspec {
 		die "$invalid_refspec_combo";
 	}
 
-	# Sub arguments -> option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5')
+	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5')
 	my ($flag, $ref) = @_;
 
 	# Get refs from `git {branch,tag} --list`
 	my $refs = `git $flag --list`;
+
+	# Remote branches (if --branch option was given)
+	my $remotes = `git branch -r` if $flag eq "branch";
+
+	# Append remote branches to $refs if --branch option was given
+	$refs = $refs . $remotes if defined $remotes;
 
 	# Filter asterisk from `git {branch,tag} --list`
 	$refs =~ s/\*//gi;
 	# Filter escape codes from `git {branch,tag} --list`
 	$refs =~ s/\033\[\d*(;\d*)*m//g;
 
-	# Split refspecs into an array,
+	# Split refspecs into an array
 	my @refspecs = split "\n", $refs;
-	# then trim any whitespace from them
+	# Trim whitespace from each array element
 	@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
 
-	# If `$refspec` is a valid ref (branch or tag), update `$refspec`
+	# If `$ref` is indeed a valid refspec, update `$refspec`
 	if (grep /^$ref$/, @refspecs) {
 		$refspec = $ref;
 	} else {
 		# Otherwise, emit an error specific to
 		# the option given and exit the script
+		# ------------------------------------
+		# @todo Create a hash for mapping refs
+		# to their subsequent error messages
 		if ($flag eq "branch") {
 			die "$invalid_branchref_error";
 		} elsif ($flag eq "tag") {
@@ -414,15 +432,18 @@ sub set_refspec {
 # Set non-standard pipeline that either circumvents `git log`, or uses
 # an alternate syntax, which is essential for flag options like `--total`
 sub set_ns_pipeline {
-	my $flag = shift;
+	my $flag     = shift;
 	my $pipeline = $ns_pipelines{$flag};
+
 	if ($flag eq "total") {
 		my $command = shell_quote @$pipeline;
 
 		# Array of abbreviated commit hashes
 		my @hashes = `$command`;
 		my $total  = @hashes;
+
 		print "$total\n";
+
 		exit 0;
 	}
 }
