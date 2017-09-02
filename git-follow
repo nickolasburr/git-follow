@@ -616,3 +616,5 @@ __END__
 	git-branch(1), git-check-ref-format(1), git-config(1), git-diff(1), git-log(1), git-revisions(1)
 
 =cut
+
+/* vim: filetype=perl */
