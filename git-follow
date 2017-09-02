@@ -1,9 +1,11 @@
 #!/usr/bin/env perl
 
-# git-follow - Follow lifetime changes of a pathspec in Git.
-
-# Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
-# Licensed under WTFNMFPL (https://goo.gl/ZDUPMZ)
+###
+### git-follow - Follow lifetime changes of a pathspec in Git
+###
+### Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
+### Licensed under WTFNMFPL (https://goo.gl/ZDUPMZ)
+###
 
 use 5.008;
 use strict;
@@ -130,15 +132,22 @@ sub shell_quote {
 ### Environment variables
 ###
 
-# Optionally set default view for diffs
-# shown in `git log` (defaults to inline)
-my $GIT_LOG_DIFF = undef;
+# Diff mode for patch views (defaults to inline).
+my $GIT_FOLLOW_DIFF_MODE  = (defined $ENV{'GIT_FOLLOW_DIFF_MODE'})
+                          ? $ENV{'GIT_FOLLOW_DIFF_MODE'}
+                          : undef;
 
-# Optionally set `--no-pager` flag option,
-# and Git won't use a pager (e.g. less) to
-# display commits, patch diffs, etc.
-my $GIT_NO_PAGER = undef;
+# Log format. Defaults to the following format:
+# --------------------------------------------------------------
+# commit (tree) - subject - author name <author email> [timestamp]
+my $GIT_FOLLOW_LOG_FORMAT = (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'})
+                          ? $ENV{'GIT_FOLLOW_LOG_FORMAT'}
+                          : "%C(bold cyan)%h%Creset (%C(bold magenta)%t%Creset) - %s - %C(bold blue)%an%Creset <%C(bold yellow)%ae%Creset> [%C(bold green)%cr%Creset]";
 
+# No pager mode. Defaults to 0 (pager mode).
+my $GIT_FOLLOW_NO_PAGER   = (defined $ENV{'GIT_FOLLOW_NO_PAGER'})
+                          ? $ENV{'GIT_FOLLOW_NO_PAGER'}
+                          : undef;
 ###
 ### User notices, errors
 ###
@@ -170,17 +179,16 @@ END_INVALID_USAGE_ERROR
 ### git-follow(1) subroutines
 ###
 
-sub is_integer;
+sub is_int;
 sub get_revr;
-sub get_format_rflag;
+sub get_format_ropt;
 sub git_follow;
 sub rm_cflags;
 sub set_args;
-sub set_aux_flag;
+sub set_aux_opt;
 sub set_branchname;
-sub set_ns_pipeline;
+sub set_ns_pipe;
 
-# Number of options (and option arguments) given
 my $argc = @ARGV;
 
 # If `system` returns a non-zero exit status, meaning the
@@ -191,92 +199,79 @@ my $argc = @ARGV;
 # emit an error message with usage details and kill the script
 $argc or die "$invalid_usage_error";
 
-# Store the last argument (which should be
-# the pathspec the user is trying to track)
-# and remove it from the `@ARGV` array
 my $pathspec = pop @ARGV;
 
-# Target refspec (when either `--branch` or `--tag` option is specified)
-my $refspec = undef;
-
-# Run a quick check and verify `$pathspec` is a valid pathspec
 if (! -e $pathspec) {
 	die "$invalid_pathspec_error";
 }
 
-# Flag options passed to the script
-my %flags;
+my %options;
 
 # Logical separator used to help differentiate
 # between ambiguous flag options (and arguments),
 # branch/revision/tag refs, and valid pathspecs
 my $lsep = "--";
 
-# Default format to use for `git log --format` flag option
-my $git_log_format = <<"END_LOG_FORMAT";
------------------------------------------------------------
-| Commit:  %C(bold cyan)%h%Creset
-| Tree:    %C(bold magenta)%t%Creset
-| Author:  %C(bold blue)%an%Creset %C(bold yellow)<%ae>%Creset
-| Date:    %C(dim cyan)%cD%Creset %C(bold green)[%cr]%Creset
-| Message: %s
------------------------------------------------------------
-END_LOG_FORMAT
+# Target refspec (when either `--branch` or `--tag` option is specified)
+my $refspec = undef;
 
-# Default `git log` flag options
-my %git_log_flags = (
+# Default `git log` options
+my %git_log_options = (
 	"follow"    => "--follow",
-	"format"    => "--format=$git_log_format",
+	"format"    => "--format=$GIT_FOLLOW_LOG_FORMAT",
 	"graph"     => "--graph",
 	"no-merges" => "--no-merges",
-	"patch"     => "--patch-with-stat"
+	"patch"     => "--patch-with-stat",
 );
 
-my @git_log_flag_values;
+my @git_log_option_values;
 
 # Flag options and their conflicting counterparts
-my %cflags = (
+my %copts = (
+	"no-patch" => [
+		"patch",
+	],
 	"reverse" => [
 		"graph",
-		"follow"
-	]
+		"follow",
+	],
 );
 
 # Default argument values for flag options
 my %dargs = (
 	"last"  => 1,
-	"lines" => 1
+	"lines" => 1,
 );
 
 # Base components of `git log` shell command, represented
 # as an array to make it easier to pass to `system` builtin
 my @git_log = (
 	"git",
-	"log"
+	"log",
 );
 
 # Non-standard pipelines for use with alternate
 # syntax of `git log` and non `git log` commands
-my %ns_pipelines = (
+my %ns_pipes = (
 	"total" => [
 		"git",
 		"log",
 		"--follow",
 		"--format='%h'",
 		"$lsep",
-		"$pathspec"
+		"$pathspec",
 	]
 );
 
-# If `$GIT_NO_PAGER` is defined,
+# If `$GIT_FOLLOW_NO_PAGER` is defined,
 # pass `--no-pager` flag to `git`
-if (defined $GIT_NO_PAGER) {
+if (defined $GIT_FOLLOW_NO_PAGER) {
 	my $git = shift @git_log;
-	unshift @git_log, ($git, $GIT_NO_PAGER);
+	unshift @git_log, ($git, "--no-pager");
 }
 
 # Determine if value is an integer
-sub is_integer {
+sub is_int {
 	my $num = shift;
 
 	if (defined $num) {
@@ -301,14 +296,14 @@ sub get_revr {
 	# @todo: Allow refname before '@{n}', either as flag option
 	# argument (e.g. --branchname master --range 3 5) or passed
 	# directly to `--range` (e.g. --range master 3 5)
-	$revr_start = "\@{$revr_start}" if &is_integer($revr_start);
-	$revr_end   = "\@{$revr_end}" if &is_integer($revr_end);
+	$revr_start = "\@{$revr_start}" if &is_int($revr_start);
+	$revr_end   = "\@{$revr_end}" if &is_int($revr_end);
 
 	return "$revr_start..$revr_end";
 }
 
 # Format the `git log` flag with argument(s) given
-sub get_format_rflag {
+sub get_format_ropt {
 	my ($flag, @args) = @_;
 
 	if ($flag eq "first") {
@@ -337,6 +332,8 @@ sub get_format_rflag {
 		} else {
 			return "-L $start,$end:$pathspec";
 		}
+	} elsif ($flag eq "no-patch") {
+			return "--no-patch";
 	} elsif ($flag eq "range") {
 		my $revs       = shift @args;
 		my $revr_start = @$revs[0];
@@ -350,36 +347,35 @@ sub get_format_rflag {
 
 # Remove conflicting `git log` flag options so
 # they're not passed to `system`, causing errors
-sub rm_cflags {
-	my $flag    = shift;
-	my $cnflags = $cflags{$flag};
+sub rm_copts {
+	my $option = shift;
+	my $cnopts = $copts{$option};
 
-	foreach (values @$cnflags) {
-		my $cnflag = shift @$cnflags;
-		delete $git_log_flags{$cnflag};
+	foreach (values @$cnopts) {
+		my $cnopt = shift @$cnopts;
+		delete $git_log_options{$cnopt};
 	}
 }
 
 # Set argument value(s) for `$flag`,
 # whether given to the flag or default
 sub set_args {
-	my ($flag, $arg) = @_;
+	my ($opt, $arg) = @_;
 
-	# Update %flags hash with either the given option
-	# argument or with the default option argument
-	$flags{$flag} = !$arg ? $dargs{$flag} : $arg;
+	# Update %options hash with either the given option
+	# argument or with the default option argument.
+	$options{$opt} = !$arg ? $dargs{$opt} : $arg;
 }
 
-# Add flag to `%git_log_flags` hash
-sub set_aux_flag {
-	my $nflag = shift;
-	# Get formatted `git log` flag
-	my $rflag = &get_format_rflag($nflag);
+# Add flag to `%git_log_options`.
+sub set_aux_opt {
+	my $nopt = shift;
+	# Get formatted `git log` option.
+	my $ropt = &get_format_ropt($nopt);
 
-	# Remove conflicting flags
-	&rm_cflags($nflag);
-	# Add auxilary flag to `%git_log_flags` hash
-	$git_log_flags{$nflag} = $rflag;
+	# Remove conflicting options, add aux option to `%git_log_options`.
+	&rm_copts($nopt);
+	$git_log_options{$nopt} = $ropt;
 }
 
 # Update package-level `$refspec` with ref given via --branch or --tag
@@ -393,23 +389,16 @@ sub set_refspec {
 	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5')
 	my ($flag, $ref) = @_;
 
-	# Get refs from `git {branch,tag} --list`
 	my $refs = `git $flag --list`;
-
-	# Remote branches (if --branch option was given)
 	my $remotes = `git branch -r` if $flag eq "branch";
-
-	# Append remote branches to $refs if --branch option was given
 	$refs = $refs . $remotes if defined $remotes;
 
-	# Filter asterisk from `git {branch,tag} --list`
+	# Filter asterisk, escape codes from `git {branch,tag} --list`.
 	$refs =~ s/\*//gi;
-	# Filter escape codes from `git {branch,tag} --list`
 	$refs =~ s/\033\[\d*(;\d*)*m//g;
 
-	# Split refspecs into an array
+	# Split refspecs into an array, trim whitespace from each element.
 	my @refspecs = split "\n", $refs;
-	# Trim whitespace from each array element
 	@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
 
 	# If `$ref` is indeed a valid refspec, update `$refspec`
@@ -431,12 +420,12 @@ sub set_refspec {
 
 # Set non-standard pipeline that either circumvents `git log`, or uses
 # an alternate syntax, which is essential for flag options like `--total`
-sub set_ns_pipeline {
-	my $flag     = shift;
-	my $pipeline = $ns_pipelines{$flag};
+sub set_ns_pipe {
+	my $flag = shift;
+	my $pipe = $ns_pipes{$flag};
 
 	if ($flag eq "total") {
-		my $command = shell_quote @$pipeline;
+		my $command = shell_quote @$pipe;
 
 		# Array of abbreviated commit hashes
 		my @hashes = `$command`;
@@ -449,47 +438,55 @@ sub set_ns_pipeline {
 }
 
 # Require options to be case-sensitive, positionally interchangeable,
-# and able to accept a range of arguments, based on flag option
+# and able to accept a range of arguments, based on option type.
 Getopt::Long::Configure(
 	'no_ignore_case',
 	'no_auto_abbrev',
 	'no_getopt_compat',
-	'require_order'
+	'require_order',
 );
 
-# Get flag options and arguments passed to the script
+# Get options and arguments passed to the script
 Getopt::Long::GetOptions(
-	\%flags,
+	\%options,
 	'branch|b=s{1,1}'  => \&set_refspec,
 	'first|f',
 	'func|F=s{1,1}',
 	'last|l=i{0,1}'    => \&set_args,
 	'lines|L=i@{1,2}',
+	'no-patch|N'       => \&set_aux_opt,
 	'range|r=s@{1,2}',
-	'reverse|R'        => \&set_aux_flag,
+	'reverse|R'        => \&set_aux_opt,
 	'tag|t=s{1,1}'     => \&set_refspec,
-	'total|T'          => \&set_ns_pipeline
+	'total|T'          => \&set_ns_pipe,
 ) or die "$invalid_usage_error";
 
-# Map to `git log` flag options, format the
-# command and pass it to `system` builtin
+# Map to `git log` options, format the
+# command and pass to `system` builtin.
 my @command = ();
 
-# Iterate through flag options and arguments (if applicable)
-while (my ($flag, $args) = each %flags) {
-	my $rflag = &get_format_rflag($flag, $args);
+# Iterate through options and option arguments (if applicable).
+while (my ($flag, $args) = each %options) {
+	my $rflag = &get_format_ropt($flag, $args);
 	push @command, $rflag;
 }
 
-# Update `@git_log_flag_values` with
-# corresponding `git log` flag options
-@git_log_flag_values = values %git_log_flags;
+# If `$GIT_FOLLOW_NO_PAGER` is defined,
+# pass `--no-pager` option to `git`.
+if (defined $GIT_FOLLOW_NO_PAGER) {
+	my $git = shift @git_log;
+	unshift @git_log, ($git, "--no-pager");
+}
 
-# Change the diff style, if applicable
-unshift @git_log_flag_values, $GIT_LOG_DIFF if defined $GIT_LOG_DIFF;
-unshift @command, @git_log, @git_log_flag_values;
+# Update `@git_log_option_values` with
+# corresponding `git log` options.
+@git_log_option_values = values %git_log_options;
 
-# Add refspec, if given as an argument to --branch or --tag
+# Change the diff style, if applicable.
+unshift @git_log_option_values, $GIT_FOLLOW_DIFF_MODE if defined $GIT_FOLLOW_DIFF_MODE;
+unshift @command, @git_log, @git_log_option_values;
+
+# Add refspec, if given as an argument to --branch or --tag.
 push @command, $refspec if defined $refspec;
 push @command, $lsep, $pathspec;
 
@@ -513,7 +510,7 @@ __END__
 
 =head1 VERSION
 
-	version 1.1.0
+	version 1.1.1
 
 =head1 SYNOPSIS
 
@@ -521,15 +518,18 @@ __END__
 
 =head1 DESCRIPTION
 
-	Follow lifetime changes of a pathspec through the history of a Git repository.
+	Follow lifetime changes of a pathspec in Git. git-follow(1) makes analyzing changes of a pathspec trivial with robust options and simplified log output.
 
 =head1 ENVIRONMENT
 
-	$GIT_LOG_DIFF
-		Diff presentation mode. Defaults to inline. Set to `--color-words' to display side by side.
+	GIT_FOLLOW_DIFF_MODE
+		Diff mode. Defaults to inline. See --word-diff, --color-words, et al. of git-log(1) for syntax.
 
-	$GIT_NO_PAGER
-		If Git should use a pager. Defaults to true. Set to `--no-pager' to prevent Git from using the default pager.
+	GIT_FOLLOW_LOG_FORMAT
+		Log format. See --format of git-log(1) for syntax.
+
+	GIT_FOLLOW_NO_PAGER
+		No pager mode. Defaults to 0. Set to 1 to prevent Git from using a pager. See --no-pager of git(1) for details.
 
 =head1 OPTIONS
 
@@ -548,6 +548,9 @@ __END__
 	--lines, -L <start> [<end>]
 		Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF boundary.
 
+	--no-patch, -N
+		Suppress diff output. See --no-patch of git-log(1) for details.
+
 	--range, -r <startref> [<endref>]
 		Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See git-revisions(1) for details.
 
@@ -562,7 +565,7 @@ __END__
 
 =head1 NOTES
 
-	Like most standard Git builtins, git-follow supports an optional pathspec delimiter (--) to help disambiguate options and arguments from pathspecs.
+	Like standard Git builtins, git-follow supports an optional pathspec delimiter (--) to help disambiguate options, option arguments, and refs from pathspecs.
 
 =head1 EXAMPLES
 
