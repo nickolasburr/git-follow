@@ -617,4 +617,4 @@ __END__
 
 =cut
 
-/* vim: set filetype=perl: */
+# vim: syntax=perl
