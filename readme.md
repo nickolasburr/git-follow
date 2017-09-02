@@ -1,6 +1,6 @@
 # git-follow(1)
 
-`git-follow` follows the lifetime changes of a pathspec (including renames) through the history of a Git repository, providing a simplified log and patch diff format.
+`git-follow` follows lifetime changes of a pathspec through the history of a Git repository, providing a simplified log and patch diff format.
 
 ## Installation
 
@@ -25,7 +25,7 @@ Make sure the file is executable via `chmod`:
 
 ```shell
 # => /usr/local/bin
-chmod u+x git-follow
+chmod +x git-follow
 ```
 
 `git-follow` also provides a man page for reference. To install the man page:
@@ -40,8 +40,9 @@ Once installed, you can view the man page by either specifying the `--help` opti
 
 You can set environment variables to customize the output of `git-follow`. The following are currently available:
 
-+ `$GIT_LOG_DIFF`: Diff presentation mode. Defaults to inline. Set to `--color-words` to display side by side. See [`git log --color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt) for details.
-+ `$GIT_NO_PAGER`: If Git should use a pager. Defaults to true. Set to `--no-pager` to prevent Git from using the default pager.
++ `GIT_FOLLOW_DIFF_MODE`: Diff mode. Defaults to inline. See --word-diff, --color-words, et al. of git-log(1) for syntax.
++ `GIT_FOLLOW_LOG_FORMAT`: Log format. See --format of git-log(1) for syntax.
++ `GIT_FOLLOW_NO_PAGER`: No pager mode. Defaults to 0. Set to 1 to prevent Git from using a pager. See --no-pager of git(1) for details.
 
 ## Options
 
@@ -52,6 +53,7 @@ Options can be specified to provide more refined information. If no options are 
 + `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`git-log -L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) for details.
 + `--last`, `-l` `[<count>]`: Show last `<count>` commits where pathspec was affected. Omitting `<count>` defaults to last commit.
 + `--lines`, `-L` `<start>` `[<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to EOF boundary.
++ `--no-patch`, `-N`: Suppress diff output. See --no-patch of git-log(1) for details.
 + `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See [git-revisions(1)](https://git-scm.com/docs/gitrevisions) for details.
 + `--reverse`, `-R`: Show commits in reverse chronological order.
 + `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
@@ -59,7 +61,7 @@ Options can be specified to provide more refined information. If no options are 
 
 ## Notes
 
-Like most standard Git builtins, `git-follow` supports an optional pathspec delimiter (`--`) to help disambiguate options and arguments from pathspecs.
+Like standard Git builtins, git-follow supports an optional pathspec delimiter (--) to help disambiguate options, option arguments, and refs from pathspecs.
 
 ## Examples
 
