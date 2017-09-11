@@ -128,6 +128,8 @@ sub shell_quote {
 ### Begin git-follow(1)
 ###
 
+my $GIT_FOLLOW_VERSION = "1.1.1";
+
 ###
 ### Environment variables
 ###
@@ -171,7 +173,8 @@ my $invalid_usage_error     = <<"END_INVALID_USAGE_ERROR";
 	--range,   -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD.
 	--reverse, -R                         Show commits in reverse chronological order.
 	--tag,     -t <tagref>                Show commits specific to a tag.
-	--total,   -T                         Show the total number of commits for pathspec.
+	--total,   -T                         Show total number of commits for pathspec.
+	--version, -V                         Show current version number.
 
 END_INVALID_USAGE_ERROR
 
@@ -195,10 +198,19 @@ my $argc = @ARGV;
 # current directory is not a Git repository, kill the script
 !system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") or die "$repo_not_found_error";
 
-# If no arguments were given (e.g. `git follow` with no pathspec),
-# emit an error message with usage details and kill the script
+# If no arguments were given (e.g. `git follow`, no pathspec),
+# emit an error message with usage details and kill the script.
 $argc or die "$invalid_usage_error";
 
+# If --version (or -V) was given as an option,
+# print the current version number and exit.
+if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
+	print "$GIT_FOLLOW_VERSION\n";
+
+	exit 0;
+}
+
+# Name of pathspec given as an argument to git-follow.
 my $pathspec = pop @ARGV;
 
 if (! -e $pathspec) {
@@ -425,7 +437,7 @@ sub set_ns_pipe {
 	my $pipe = $ns_pipes{$flag};
 
 	if ($flag eq "total") {
-		my $command = shell_quote @$pipe;
+		my $command = &shell_quote(@$pipe);
 
 		# Array of abbreviated commit hashes
 		my @hashes = `$command`;
@@ -459,6 +471,7 @@ Getopt::Long::GetOptions(
 	'reverse|R'        => \&set_aux_opt,
 	'tag|t=s{1,1}'     => \&set_refspec,
 	'total|T'          => \&set_ns_pipe,
+	'version|V',
 ) or die "$invalid_usage_error";
 
 # Map to `git log` options, format the
@@ -562,6 +575,9 @@ __END__
 
 	--total, -T
 		Show total number of commits for pathspec.
+
+	--version, -V
+		Show current version number.
 
 =head1 NOTES
 
