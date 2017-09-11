@@ -128,7 +128,7 @@ sub shell_quote {
 ### Begin git-follow(1)
 ###
 
-my $GIT_FOLLOW_VERSION = "1.1.1";
+my $GIT_FOLLOW_VERSION = "1.1.2";
 
 ###
 ### Environment variables
@@ -185,7 +185,6 @@ END_INVALID_USAGE_ERROR
 sub is_int;
 sub get_revr;
 sub get_format_ropt;
-sub git_follow;
 sub rm_cflags;
 sub set_args;
 sub set_aux_opt;
@@ -523,7 +522,7 @@ __END__
 
 =head1 VERSION
 
-	version 1.1.1
+	version 1.1.2
 
 =head1 SYNOPSIS
 
@@ -629,7 +628,7 @@ __END__
 
 =head1 SEE ALSO
 
-	git-branch(1), git-check-ref-format(1), git-config(1), git-diff(1), git-log(1), git-revisions(1)
+	git(1), git-branch(1), git-check-ref-format(1), git-config(1), git-diff(1), git-log(1), git-remote(1), git-revisions(1), git-tag(1)
 
 =cut
 
