@@ -58,6 +58,7 @@ Options can be specified to provide more refined information. If no options are 
 + `--reverse`, `-R`: Show commits in reverse chronological order.
 + `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
 + `--total`, `-T`: Show total number of commits for pathspec.
++ `--version`, `-V`: Show current version number.
 
 ## Notes
 
