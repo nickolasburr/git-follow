@@ -53,7 +53,7 @@ Options can be specified to provide more refined information. If no options are 
 + `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1) for details.
 + `--last`, `-l` `[<count>]`: Show last `<count>` commits where pathspec was affected. Omitting `<count>` defaults to last commit.
 + `--lines`, `-L` `<start>` `[<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to EOF boundary.
-+ `--no-patch`, `-N`: Suppress diff output. See --no-patch of git-log(1) for details.
++ `--no-patch`, `-N`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1) for details.
 + `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See [git-revisions(1)](https://git-scm.com/docs/gitrevisions) for details.
 + `--reverse`, `-R`: Show commits in reverse chronological order.
 + `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
@@ -78,7 +78,7 @@ git follow --branch topic -- blame.c
 git follow --first -- branch.c
 ```
 
-**Display last 5 commits which affected `column.c`** (See [`git log --diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) for details)
+**Display last 5 commits which affected `column.c`** (See [`--diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) of git-log(1) for details)
 
 ```shell
 git follow --last 5 -- column.c
