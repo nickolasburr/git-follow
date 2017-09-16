@@ -54,7 +54,7 @@ Options can be specified to provide more refined information. If no options are 
 + `--last`, `-l` `[<count>]`: Show last `<count>` commits where pathspec was affected. Omitting `<count>` defaults to last commit.
 + `--lines`, `-L` `<start>` `[<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to EOF boundary.
 + `--no-patch`, `-N`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1) for details.
-+ `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See [git-revisions(1)](https://git-scm.com/docs/gitrevisions) for details.
++ `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See gitrevisions(1) for details.
 + `--reverse`, `-R`: Show commits in reverse chronological order.
 + `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
 + `--total`, `-T`: Show total number of commits for pathspec.
@@ -129,3 +129,7 @@ git follow --total -- rebase.c
 ```
 
 <a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. 10 minutes ago), you need to delimit the string with single or double quotes.
+
+## See Also
+
+[git(1)](https://git-scm.com/docs/git), [git-branch(1)](https://git-scm.com/docs/git-branch), [git-check-ref-format(1)](https://git-scm.com/docs/git-check-ref-format), [git-config(1)](https://git-scm.com/docs/git-config), [git-diff(1)](https://git-scm.com/docs/git-diff), [git-log(1)](https://git-scm.com/docs/git-log), [git-remote(1)](https://git-scm.com/docs/git-remote), [gitrevisions(1)](https://git-scm.com/docs/gitrevisions), [git-tag(1)](https://git-scm.com/docs/git-tag)
