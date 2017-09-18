@@ -130,6 +130,14 @@ sub shell_quote {
 
 my $GIT_FOLLOW_VERSION = "1.1.2";
 
+# If --version (or -V) was given as an option,
+# print the current version number and exit.
+if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
+	print "$GIT_FOLLOW_VERSION\n";
+
+	exit 0;
+}
+
 ###
 ### Environment variables
 ###
@@ -191,23 +199,14 @@ sub set_aux_opt;
 sub set_branchname;
 sub set_ns_pipe;
 
-my $argc = @ARGV;
-
-# If `system` returns a non-zero exit status, meaning the
-# current directory is not a Git repository, kill the script
+# If `system` returns non-zero exit status, kill the script.
 !system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") or die "$repo_not_found_error";
+
+my $argc = @ARGV;
 
 # If no arguments were given (e.g. `git follow`, no pathspec),
 # emit an error message with usage details and kill the script.
 $argc or die "$invalid_usage_error";
-
-# If --version (or -V) was given as an option,
-# print the current version number and exit.
-if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	print "$GIT_FOLLOW_VERSION\n";
-
-	exit 0;
-}
 
 # Name of pathspec given as an argument to git-follow.
 my $pathspec = pop @ARGV;
@@ -220,7 +219,7 @@ my %options;
 
 # Logical separator used to help differentiate
 # between ambiguous flag options (and arguments),
-# branch/revision/tag refs, and valid pathspecs
+# branch/revision/tag refs, and valid pathspecs.
 my $lsep = "--";
 
 # Target refspec (when either `--branch` or `--tag` option is specified)
