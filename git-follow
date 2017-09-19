@@ -128,7 +128,7 @@ sub shell_quote {
 ### Begin git-follow(1)
 ###
 
-my $GIT_FOLLOW_VERSION = "1.1.2";
+my $GIT_FOLLOW_VERSION = "1.1.3";
 
 # If --version (or -V) was given as an option,
 # print the current version number and exit.
@@ -173,16 +173,19 @@ my $invalid_usage_error     = <<"END_INVALID_USAGE_ERROR";
 
 	Options:
 
-	--branch,  -b <branchref>             Show commits specific to a branch.
-	--first,   -f                         Show first commit where Git initiated tracking of pathspec.
-	--func,    -F <funcname>              Show commits which affected function <funcname> in pathspec.
-	--last,    -l [<count>]               Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
-	--lines,   -L <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF boundary.
-	--range,   -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD.
-	--reverse, -R                         Show commits in reverse chronological order.
-	--tag,     -t <tagref>                Show commits specific to a tag.
-	--total,   -T                         Show total number of commits for pathspec.
-	--version, -V                         Show current version number.
+	--branch,     -b <branchref>             Show commits specific to a branch.
+	--first,      -f                         Show first commit where Git initiated tracking of pathspec.
+	--func,       -F <funcname>              Show commits which affected function <funcname> in pathspec.
+	--last,       -l [<count>]               Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
+	--lines,      -L <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
+	--no-merges,  -M                         Show commits that have a maximum of one parent. See --no-merges of git-log(1).
+	--no-patch,   -N                         Suppress diff output. See --no-patch of git-log(1).
+	--no-renames, -O                         Disable rename detection. See --no-renames of git-log(1).
+	--range,      -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
+	--reverse,    -R                         Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
+	--tag,        -t <tagref>                Show commits specific to a tag.
+	--total,      -T                         Show total number of commits for pathspec.
+	--version,    -V                         Show current version number.
 
 END_INVALID_USAGE_ERROR
 
@@ -227,21 +230,24 @@ my $refspec = undef;
 
 # Default `git log` options
 my %git_log_options = (
-	"follow"    => "--follow",
-	"format"    => "--format=$GIT_FOLLOW_LOG_FORMAT",
-	"graph"     => "--graph",
-	"no-merges" => "--no-merges",
-	"patch"     => "--patch-with-stat",
+	"follow"     => "--follow",
+	"format"     => "--format=$GIT_FOLLOW_LOG_FORMAT",
+	"graph"      => "--graph",
+	"no-renames" => "--no-renames",
+	"patch"      => "--patch-with-stat",
 );
 
 my @git_log_option_values;
 
-# Flag options and their conflicting counterparts
+# Options and their conflicting counterparts.
 my %copts = (
-	"no-patch" => [
+	"no-patch"   => [
 		"patch",
 	],
-	"reverse" => [
+	"no-renames" => [
+		"follow",
+	],
+	"reverse"    => [
 		"graph",
 		"follow",
 	],
@@ -254,14 +260,14 @@ my %dargs = (
 );
 
 # Base components of `git log` shell command, represented
-# as an array to make it easier to pass to `system` builtin
+# as an array to make it easier to pass to `system` builtin.
 my @git_log = (
 	"git",
 	"log",
 );
 
 # Non-standard pipelines for use with alternate
-# syntax of `git log` and non `git log` commands
+# syntax of `git log` and non `git log` commands.
 my %ns_pipes = (
 	"total" => [
 		"git",
@@ -273,14 +279,7 @@ my %ns_pipes = (
 	]
 );
 
-# If `$GIT_FOLLOW_NO_PAGER` is defined,
-# pass `--no-pager` flag to `git`
-if (defined $GIT_FOLLOW_NO_PAGER) {
-	my $git = shift @git_log;
-	unshift @git_log, ($git, "--no-pager");
-}
-
-# Determine if value is an integer
+# Determine if value is an integer.
 sub is_int {
 	my $num = shift;
 
@@ -291,7 +290,7 @@ sub is_int {
 	}
 }
 
-# Get rev range for the given pathspec
+# Get rev range for the given pathspec.
 sub get_revr {
 	my $revr_start = shift;
 	my $revr_end   = shift;
@@ -301,11 +300,11 @@ sub get_revr {
 	$revr_end = "HEAD" if not defined $revr_end;
 
 	# If only an integer was given, interpolate
-	# as a rev range for the current branch
+	# as a rev range for the current branch.
 	# --------------------------------------------
 	# @todo: Allow refname before '@{n}', either as flag option
 	# argument (e.g. --branchname master --range 3 5) or passed
-	# directly to `--range` (e.g. --range master 3 5)
+	# directly to `--range` (e.g. --range master 3 5).
 	$revr_start = "\@{$revr_start}" if &is_int($revr_start);
 	$revr_end   = "\@{$revr_end}" if &is_int($revr_end);
 
@@ -326,10 +325,10 @@ sub get_format_ropt {
 		my $num = shift @args;
 
 		if (!$num) {
-			return "--max-count=1";
-		} else {
-			return "--max-count=$num";
+			$num = 1;
 		}
+
+		return "--max-count=$num";
 	} elsif ($flag eq "lines") {
 		my @nums  = shift @args;
 		my $lines = shift @nums;
@@ -342,16 +341,14 @@ sub get_format_ropt {
 		} else {
 			return "-L $start,$end:$pathspec";
 		}
-	} elsif ($flag eq "no-patch") {
-			return "--no-patch";
 	} elsif ($flag eq "range") {
 		my $revs       = shift @args;
 		my $revr_start = @$revs[0];
 		my $revr_end   = @$revs[1];
 
 		return &get_revr($revr_start, $revr_end);
-	} elsif ($flag eq "reverse") {
-		return "--reverse";
+	} else {
+		return "--$flag";
 	}
 }
 
@@ -363,12 +360,12 @@ sub rm_copts {
 
 	foreach (values @$cnopts) {
 		my $cnopt = shift @$cnopts;
-		delete $git_log_options{$cnopt};
+		delete $git_log_options{$cnopt} if exists $git_log_options{$cnopt};
 	}
 }
 
-# Set argument value(s) for `$flag`,
-# whether given to the flag or default
+# Set argument for `$opt` whether,
+# given to the option or default.
 sub set_args {
 	my ($opt, $arg) = @_;
 
@@ -377,7 +374,7 @@ sub set_args {
 	$options{$opt} = !$arg ? $dargs{$opt} : $arg;
 }
 
-# Add flag to `%git_log_options`.
+# Add option to `%git_log_options`.
 sub set_aux_opt {
 	my $nopt = shift;
 	# Get formatted `git log` option.
@@ -447,16 +444,12 @@ sub set_ns_pipe {
 	}
 }
 
-# Require options to be case-sensitive, positionally interchangeable,
-# and able to accept a range of arguments, based on option type.
 Getopt::Long::Configure(
-	'no_ignore_case',
 	'no_auto_abbrev',
-	'no_getopt_compat',
+	'no_ignore_case',
 	'require_order',
 );
 
-# Get options and arguments passed to the script
 Getopt::Long::GetOptions(
 	\%options,
 	'branch|b=s{1,1}'  => \&set_refspec,
@@ -464,7 +457,9 @@ Getopt::Long::GetOptions(
 	'func|F=s{1,1}',
 	'last|l=i{0,1}'    => \&set_args,
 	'lines|L=i@{1,2}',
+	'no-merges|M'      => \&set_aux_opt,
 	'no-patch|N'       => \&set_aux_opt,
+	'no-renames|O'     => \&set_aux_opt,
 	'range|r=s@{1,2}',
 	'reverse|R'        => \&set_aux_opt,
 	'tag|t=s{1,1}'     => \&set_refspec,
@@ -521,7 +516,7 @@ __END__
 
 =head1 VERSION
 
-	version 1.1.2
+	version 1.1.3
 
 =head1 SYNOPSIS
 
@@ -551,22 +546,28 @@ __END__
 		Show first commit where Git initiated tracking of pathspec.
 
 	--func, -F <funcname>
-		Show commits which affected function <funcname> in pathspec. See git-log(1) for details.
+		Show commits which affected function <funcname> in pathspec. See -L of git-log(1).
 
 	--last, -l [<count>]
 		Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
 
 	--lines, -L <start> [<end>]
-		Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF boundary.
+		Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
+
+	--no-merges, -M
+		Show commits that have a maximum of one parent. See --no-merges of git-log(1).
 
 	--no-patch, -N
-		Suppress diff output. See --no-patch of git-log(1) for details.
+		Suppress diff output. See --no-patch of git-log(1).
+
+	--no-renames, -O
+		Disable rename detection. See --no-renames of git-log(1).
 
 	--range, -r <startref> [<endref>]
-		Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See git-revisions(1) for details.
+		Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See git-revisions(1).
 
 	--reverse, -R
-		Show commits in reverse chronological order.
+		Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
 
 	--tag, -t <tagref>
 		Show commits specific to a tag.
@@ -606,7 +607,9 @@ __END__
 
 		--OR--
 
-		git follow --range 5 -- worktree.c (assumes checked out branch is master)
+		Same as above (assuming currently checked out branch is master).
+
+		git follow --range 5 -- worktree.c
 
 	Display commits between two days ago and one hour ago
 		git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
