@@ -1,6 +1,6 @@
 # git-follow(1)
 
-`git-follow` follows lifetime changes of a pathspec through the history of a Git repository, providing a simplified log and patch diff format.
+`git-follow` follows lifetime changes of a pathspec in Git, providing a simplified log and patch diff.
 
 ## Installation
 
@@ -42,7 +42,7 @@ You can set environment variables to customize the output of `git-follow`. The f
 
 + `GIT_FOLLOW_DIFF_MODE`: Diff mode. Defaults to inline. See [`--word-diff`](https://git-scm.com/docs/git-log#git-log---word-diffltmodegt), [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt), et al. of git-log(1) for syntax.
 + `GIT_FOLLOW_LOG_FORMAT`: Log format. See [`--format`](https://git-scm.com/docs/git-log#git-log---formatltformatgt) of git-log(1) for syntax.
-+ `GIT_FOLLOW_NO_PAGER`: No pager mode. Defaults to 0. Set to 1 to prevent Git from using a pager. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1) for details.
++ `GIT_FOLLOW_NO_PAGER`: No pager mode. Defaults to 0. Set to 1 to prevent Git from using a pager. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1).
 
 ## Options
 
@@ -50,12 +50,14 @@ Options can be specified to provide more refined information. If no options are 
 
 + `--branch`, `-b` `<branchref>`: Show commits specific to a branch.
 + `--first`, `-f`: Show first commit where Git initiated tracking of pathspec.
-+ `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1) for details.
++ `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1).
 + `--last`, `-l` `[<count>]`: Show last `<count>` commits where pathspec was affected. Omitting `<count>` defaults to last commit.
-+ `--lines`, `-L` `<start>` `[<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to EOF boundary.
-+ `--no-patch`, `-N`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1) for details.
-+ `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See gitrevisions(1) for details.
-+ `--reverse`, `-R`: Show commits in reverse chronological order.
++ `--lines`, `-L` `<start>` `[<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to `EOF`.
++ `--no-merges`, `-M`: Show commits that have a maximum of one parent. See [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges) of git-log(1).
++ `--no-patch`, `-N`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1).
++ `--no-renames`, `-O`: Disable rename detection. See [`--no-renames`](https://git-scm.com/docs/git-log#git-log---no-renames) of git-log(1).
++ `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See gitrevisions(1).
++ `--reverse`, `-R`: Show commits in reverse chronological order. See [`--walk-reflogs`](https://git-scm.com/docs/git-log#git-log---walk-reflogs) of git-log(1).
 + `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
 + `--total`, `-T`: Show total number of commits for pathspec.
 + `--version`, `-V`: Show current version number.
@@ -78,7 +80,7 @@ git follow --branch topic -- blame.c
 git follow --first -- branch.c
 ```
 
-**Display last 5 commits which affected `column.c`** (See [`--diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) of git-log(1) for details)
+**Display last 5 commits which affected `column.c`** (See [`--diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) of git-log(1)).
 
 ```shell
 git follow --last 5 -- column.c
@@ -106,8 +108,14 @@ git follow --func funcname -- archive.c
 
 ```shell
 git follow --range master@{5} -- worktree.c
-...
-git follow --range 5 -- worktree.c # same as above (assuming the currently checked out branch is master)
+```
+
+--OR--
+
+Same as above (assuming currently checked out branch is `master`).
+
+```shell
+git follow --range 5 -- worktree.c
 ```
 
 **Display commits in range `2 days ago` and `1 hour ago` which affected `apply.c`**<sup>[1](#relative-format)</sup>
@@ -128,7 +136,7 @@ git follow --tag v1.5.3 -- graph.c
 git follow --total -- rebase.c
 ```
 
-<a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. 10 minutes ago), you need to delimit the string with single or double quotes.
+<a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. "10 minutes ago"), you need to delimit the string with quotes.
 
 ## See Also
 
