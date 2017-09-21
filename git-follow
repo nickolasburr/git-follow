@@ -225,10 +225,10 @@ my %options;
 # branch/revision/tag refs, and valid pathspecs.
 my $lsep = "--";
 
-# Target refspec (when either `--branch` or `--tag` option is specified)
+# Target refspec (when either `--branch` or `--tag` option is specified).
 my $refspec = undef;
 
-# Default `git log` options
+# Default `git log` options.
 my %git_log_options = (
 	"follow"     => "--follow",
 	"format"     => "--format=$GIT_FOLLOW_LOG_FORMAT",
@@ -276,7 +276,7 @@ my %ns_pipes = (
 		"--format='%h'",
 		"$lsep",
 		"$pathspec",
-	]
+	],
 );
 
 # Determine if value is an integer.
@@ -313,15 +313,15 @@ sub get_revr {
 
 # Format the `git log` flag with argument(s) given
 sub get_format_ropt {
-	my ($flag, @args) = @_;
+	my ($opt, @args) = @_;
 
-	if ($flag eq "first") {
+	if ($opt eq "first") {
 		return "--diff-filter=A";
-	} elsif ($flag eq "func") {
+	} elsif ($opt eq "func") {
 		my $funcname = shift @args;
 
 		return "-L^:$funcname:$pathspec";
-	} elsif ($flag eq "last") {
+	} elsif ($opt eq "last") {
 		my $num = shift @args;
 
 		if (!$num) {
@@ -329,34 +329,34 @@ sub get_format_ropt {
 		}
 
 		return "--max-count=$num";
-	} elsif ($flag eq "lines") {
+	} elsif ($opt eq "lines") {
 		my @nums  = shift @args;
 		my $lines = shift @nums;
 		my $start = @$lines[0];
 		my $end   = @$lines[1];
 
-		# If no end range was given, only specify the start and pathspec
+		# If no end range was given, only specify start and pathspec.
 		if (!$end) {
 			return "-L $start:$pathspec"
 		} else {
 			return "-L $start,$end:$pathspec";
 		}
-	} elsif ($flag eq "range") {
+	} elsif ($opt eq "range") {
 		my $revs       = shift @args;
 		my $revr_start = @$revs[0];
 		my $revr_end   = @$revs[1];
 
 		return &get_revr($revr_start, $revr_end);
 	} else {
-		return "--$flag";
+		return "--$opt";
 	}
 }
 
-# Remove conflicting `git log` flag options so
-# they're not passed to `system`, causing errors
+# Remove conflicting `git log` options so they're
+# not passed to `system`, causing conflict errors.
 sub rm_copts {
-	my $option = shift;
-	my $cnopts = $copts{$option};
+	my $opt = shift;
+	my $cnopts = $copts{$opt};
 
 	foreach (values @$cnopts) {
 		my $cnopt = shift @$cnopts;
@@ -385,19 +385,19 @@ sub set_aux_opt {
 	$git_log_options{$nopt} = $ropt;
 }
 
-# Update package-level `$refspec` with ref given via --branch or --tag
+# Update package-level `$refspec` with ref given via --branch or --tag.
 sub set_refspec {
 	# If `$refspec` is already defined, notify the user and emit an error,
-	# as you can't give both `--branch` and `--tag` options simultaneously
+	# as you can't give both `--branch` and `--tag` options simultaneously.
 	if (defined $refspec) {
 		die "$invalid_refspec_combo";
 	}
 
-	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5')
-	my ($flag, $ref) = @_;
+	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5').
+	my ($opt, $ref) = @_;
 
-	my $refs = `git $flag --list`;
-	my $remotes = `git branch -r` if $flag eq "branch";
+	my $refs = `git $opt --list`;
+	my $remotes = `git branch -r` if $opt eq "branch";
 	$refs = $refs . $remotes if defined $remotes;
 
 	# Filter asterisk, escape codes from `git {branch,tag} --list`.
@@ -408,7 +408,7 @@ sub set_refspec {
 	my @refspecs = split "\n", $refs;
 	@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
 
-	# If `$ref` is indeed a valid refspec, update `$refspec`
+	# If `$ref` is indeed a valid refspec, update `$refspec`.
 	if (grep /^$ref$/, @refspecs) {
 		$refspec = $ref;
 	} else {
@@ -417,7 +417,7 @@ sub set_refspec {
 		# ------------------------------------
 		# @todo Create a hash for mapping refs
 		# to their subsequent error messages
-		if ($flag eq "branch") {
+		if ($opt eq "branch") {
 			die "$invalid_branchref_error";
 		} elsif ($flag eq "tag") {
 			die "$invalid_tagref_error";
@@ -426,7 +426,7 @@ sub set_refspec {
 }
 
 # Set non-standard pipeline that either circumvents `git log`, or uses
-# an alternate syntax, which is essential for flag options like `--total`
+# an alternate syntax, which is essential for options like `--total`.
 sub set_ns_pipe {
 	my $flag = shift;
 	my $pipe = $ns_pipes{$flag};
@@ -434,7 +434,7 @@ sub set_ns_pipe {
 	if ($flag eq "total") {
 		my $command = &shell_quote(@$pipe);
 
-		# Array of abbreviated commit hashes
+		# Array of abbreviated commit hashes.
 		my @hashes = `$command`;
 		my $total  = @hashes;
 
@@ -518,10 +518,6 @@ __END__
 
 	version 1.1.3
 
-=head1 SYNOPSIS
-
-	git follow [OPTIONS] [--] pathspec
-
 =head1 DESCRIPTION
 
 	Follow lifetime changes of a pathspec in Git. git-follow(1) makes analyzing changes of a pathspec trivial with robust options and simplified log output.
@@ -535,7 +531,7 @@ __END__
 		Log format. See --format of git-log(1) for syntax.
 
 	GIT_FOLLOW_NO_PAGER
-		No pager mode. Defaults to 0. Set to 1 to prevent Git from using a pager. See --no-pager of git(1) for details.
+		Disable pager. Defaults to 0. Set to 1 to disable the pager. Has equivalent effect of 'git --no-pager follow ...'. See --no-pager of git(1).
 
 =head1 OPTIONS
 
