@@ -18,11 +18,11 @@ my $GIT_FOLLOW_VERSION = "1.1.3";
 # If --version (or -V) was given as an option,
 # print the current version number and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	print "$GIT_FOLLOW_VERSION\n";
-
-	exit 0;
+	&show_version();
 }
 
+# If --total (or -T) was given as an option, print
+# total number of revisions for pathspec and exit.
 if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
 	&show_total();
 }
@@ -309,6 +309,13 @@ sub show_total {
 
 	print scalar @hashes;
 	print "\n";
+
+	exit 0;
+}
+
+# Show current release version.
+sub show_version {
+	print "$GIT_FOLLOW_VERSION\n";
 
 	exit 0;
 }
