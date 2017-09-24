@@ -386,8 +386,6 @@ unshift @command, @git_log, @git_log_option_values;
 push @command, $refspec if defined $refspec;
 push @command, $lsep, $pathspec;
 
-print "@command\n";
-
 system @command;
 
 1;
@@ -446,6 +444,9 @@ __END__
 
 	--no-renames, -O
 		Disable rename detection. See --no-renames of git-log(1).
+
+	--pickaxe, -P <string>
+		Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).
 
 	--range, -r <startref> [<endref>]
 		Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See git-revisions(1).
