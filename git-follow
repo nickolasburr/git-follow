@@ -10,13 +10,14 @@
 use 5.008;
 use strict;
 use warnings;
+use Cwd qw(getcwd);
 use Getopt::Long;
 
 # Current release version.
-my $GIT_FOLLOW_VERSION = "1.1.3";
+my $GIT_FOLLOW_VERSION = "1.1.4";
 
 # If --version (or -V) was given as an option,
-# print the current version number and exit.
+# print the current release version and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
 	&show_version();
 }
@@ -43,20 +44,21 @@ my $GIT_FOLLOW_LOG_FORMAT = (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'})
                           ? $ENV{'GIT_FOLLOW_LOG_FORMAT'}
                           : "%C(bold cyan)%h%Creset (%C(bold magenta)%t%Creset) - %s - %C(bold blue)%an%Creset <%C(bold yellow)%ae%Creset> [%C(bold green)%cr%Creset]";
 
-# No pager mode. Defaults to 0 (pager mode).
+# Disable pager. Defaults to 0 (use pager).
 my $GIT_FOLLOW_NO_PAGER   = (defined $ENV{'GIT_FOLLOW_NO_PAGER'})
                           ? $ENV{'GIT_FOLLOW_NO_PAGER'}
                           : undef;
 ###
-### User notices, errors
+### User errors, notices, hints, etc.
 ###
 
-my $repo_not_found_error    = "Not a Git repository.";
-my $invalid_pathspec_error  = "Not a valid pathspec.";
-my $invalid_branchref_error = "Not a valid branch.";
-my $invalid_tagref_error    = "Not a valid tag.";
-my $invalid_refspec_combo   = "Only one --branch or one --tag option can be specified at a time.";
-my $invalid_usage_error     = <<"END_INVALID_USAGE_ERROR";
+my $invalid_repo_err  = "%s is not a Git repository.\n";
+my $invalid_repo_hint = "FYI: If you don't want to change directories, you can run 'git -C /path/to/repository follow ...'\n";
+my $invalid_pathspec  = "%s is not a valid pathspec.\n";
+my $invalid_branchref = "%s is not a valid branch.\n";
+my $invalid_tagref    = "%s is not a valid tag.\n";
+my $invalid_ref_combo = "Only one --branch or one --tag option can be specified at a time.\n";
+my $usage_synopsis    = <<"END_USAGE_SYNOPSIS";
 
   Usage: git follow [OPTIONS] [--] pathspec
 
@@ -70,13 +72,14 @@ my $invalid_usage_error     = <<"END_INVALID_USAGE_ERROR";
     --no-merges,  -M                         Show commits that have a maximum of one parent. See --no-merges of git-log(1).
     --no-patch,   -N                         Suppress diff output. See --no-patch of git-log(1).
     --no-renames, -O                         Disable rename detection. See --no-renames of git-log(1).
+    --pickaxe,    -P <string>                Show commits which change the number of occurrences of `<string>` in pathspec. See -S of git-log(1).
     --range,      -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
     --reverse,    -R                         Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
     --tag,        -t <tagref>                Show commits for pathspec, specific to a tag.
     --total,      -T                         Show total number of commits for pathspec.
-    --version,    -V                         Show current version number.
+    --version,    -V                         Show current release version.
 
-END_INVALID_USAGE_ERROR
+END_USAGE_SYNOPSIS
 
 ###
 ### git-follow(1) subroutines
@@ -87,18 +90,25 @@ sub get_revr;
 sub get_format_ropt;
 sub rm_copts;
 sub set_args;
-sub set_aux_opt;
+sub set_unary_opt;
 sub set_refspec;
 sub show_total;
-
-# If `system` returns non-zero exit status, kill the script.
-!system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") or die "$repo_not_found_error";
+sub show_version;
 
 # If no arguments were given (e.g. `git follow`, no pathspec),
 # emit an error message with usage details and kill the script.
-@ARGV or die "$invalid_usage_error";
+# We'll place this before the repository check, in case a user
+# is running `git follow` purely for the usage information.
+@ARGV or die "$usage_synopsis";
 
-# Options passed to `git-follow`.
+# If `system` returns non-zero exit status, kill the script.
+if (system("git rev-parse --is-inside-work-tree &>/dev/null")) {
+	# @todo: Build option to silence FYI output.
+	my $invalid_usage = sprintf("%s\n%s", sprintf($invalid_repo_err, getcwd), $invalid_repo_hint);
+	die "$invalid_usage";
+}
+
+# Options passed to git-follow.
 my %options;
 
 # Name of pathspec given as an argument to git-follow.
@@ -109,7 +119,7 @@ my $pathspec = $ARGV[$#ARGV];
 # branch/revision/tag refs, and valid pathspecs.
 my $lsep = "--";
 
-# Target refspec (when either `--branch` or `--tag` option is specified).
+# Target refspec (when either --branch or --tag option is specified).
 my $refspec = undef;
 
 # Default `git log` options.
@@ -180,7 +190,7 @@ sub get_revr {
 	return "$revr_start..$revr_end";
 }
 
-# Format the `git log` flag with argument(s) given.
+# Format the `git log` option with argument(s) given.
 sub get_format_ropt {
 	my ($opt, @args) = @_;
 
@@ -189,7 +199,7 @@ sub get_format_ropt {
 	} elsif ($opt eq "func") {
 		my $funcname = shift @args;
 
-		return "-L^:$funcname:$pathspec";
+		return "-L:$funcname:$pathspec";
 	} elsif ($opt eq "last") {
 		my $num = shift @args;
 
@@ -210,6 +220,10 @@ sub get_format_ropt {
 		} else {
 			return "-L $start,$end:$pathspec";
 		}
+	} elsif ($opt eq "pickaxe") {
+		my $subject = shift @args;
+
+		return "-S$subject";
 	} elsif ($opt eq "range") {
 		my $revs       = shift @args;
 		my $revr_start = @$revs[0];
@@ -233,8 +247,7 @@ sub rm_copts {
 	}
 }
 
-# Set argument for `$opt` whether,
-# given to the option or default.
+# Set argument for `$opt`, whether given to the option or default.
 sub set_args {
 	my ($opt, $arg) = @_;
 
@@ -243,8 +256,8 @@ sub set_args {
 	$options{$opt} = !$arg ? $dargs{$opt} : $arg;
 }
 
-# Add option to `%git_log_options`.
-sub set_aux_opt {
+# Add unary option to `%git_log_options`.
+sub set_unary_opt {
 	my $nopt = shift;
 	# Get formatted `git log` option.
 	my $ropt = &get_format_ropt($nopt);
@@ -259,7 +272,7 @@ sub set_refspec {
 	# If `$refspec` is already defined, notify the user and emit an error,
 	# as you can't give both `--branch` and `--tag` options simultaneously.
 	if (defined $refspec) {
-		die "$invalid_refspec_combo";
+		die "$invalid_ref_combo";
 	}
 
 	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5').
@@ -282,24 +295,24 @@ sub set_refspec {
 		$refspec = $ref;
 	} else {
 		# Otherwise, emit an error specific to
-		# the option given and exit the script
-		# ------------------------------------
-		# @todo Create a hash for mapping refs
-		# to their subsequent error messages
+		# the option given and exit the script.
 		if ($opt eq "branch") {
-			die "$invalid_branchref_error";
+			die "$invalid_branchref";
 		} elsif ($opt eq "tag") {
-			die "$invalid_tagref_error";
+			die "$invalid_tagref";
 		}
 	}
 }
 
 # Show total number of commits for pathspec.
 sub show_total {
+	# Whether to follow renames or not.
 	my $fopt = (grep { $_ eq "--no-renames" || $_ eq "-O" } @ARGV)
 	         ? "--no-renames"
 	         : "--follow";
 
+	# Use pathspec, if defined. Otherwise,
+	# get the last element in @ARGV array.
 	my $path = (defined $pathspec)
 	         ? $pathspec
 	         : $ARGV[$#ARGV];
@@ -333,15 +346,16 @@ Getopt::Long::GetOptions(
 	'func|F=s{1,1}',
 	'last|l=i{0,1}'    => \&set_args,
 	'lines|L=i@{1,2}',
-	'no-merges|M'      => \&set_aux_opt,
-	'no-patch|N'       => \&set_aux_opt,
-	'no-renames|O'     => \&set_aux_opt,
+	'no-merges|M'      => \&set_unary_opt,
+	'no-patch|N'       => \&set_unary_opt,
+	'no-renames|O'     => \&set_unary_opt,
+	'pickaxe|P=s{1,1}',
 	'range|r=s@{1,2}',
-	'reverse|R'        => \&set_aux_opt,
+	'reverse|R'        => \&set_unary_opt,
 	'tag|t=s{1,1}'     => \&set_refspec,
 	'total|T',
 	'version|V',
-) or die "$invalid_usage_error";
+) or die "$usage_synopsis";
 
 # Map to `git log` options, format the
 # command and pass to `system` builtin.
@@ -372,6 +386,8 @@ unshift @command, @git_log, @git_log_option_values;
 push @command, $refspec if defined $refspec;
 push @command, $lsep, $pathspec;
 
+print "@command\n";
+
 system @command;
 
 1;
@@ -388,7 +404,7 @@ __END__
 
 =head1 VERSION
 
-	version 1.1.3
+	version 1.1.4
 
 =head1 DESCRIPTION
 
@@ -444,7 +460,7 @@ __END__
 		Show total number of commits for pathspec.
 
 	--version, -V
-		Show current version number.
+		Show current release version.
 
 =head1 NOTES
 
