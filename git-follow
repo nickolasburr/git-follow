@@ -12,130 +12,19 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-###
-### To make git-follow(1) a standalone package and avoid requiring external dependencies for use,
-### String::ShellQuote package (https://goo.gl/Fmv1PF) is inlined for convenience and portability
-###
-
-###
-### Begin String::ShellQuote package
-###
-
-sub croak {
-	require Carp;
-	goto &Carp::croak;
-}
-
-sub _shell_quote_backend {
-	my @in = @_;
-	my @err = ();
-
-	if (0) {
-		require RS::Handy;
-		print RS::Handy::data_dump(\@in);
-	}
-
-	return \@err, '' unless @in;
-
-	my $ret = '';
-	my $saw_non_equal = 0;
-
-	foreach (@in) {
-		if (!defined $_ or $_ eq '') {
-			$_ = "''";
-			next;
-		}
-
-		if (s/\x00//g) {
-			push @err, "No way to quote string containing null (\\000) bytes";
-		}
-
-		my $escape = 0;
-
-		# = needs quoting when it's the first element (or part of a
-		# series of such elements), as in command position it's a
-		# program-local environment setting
-
-		if (/=/) {
-			if (!$saw_non_equal) {
-				$escape = 1;
-			}
-		} else {
-			$saw_non_equal = 1;
-		}
-
-		if (m|[^\w!%+,\-./:=@^]|) {
-				$escape = 1;
-		}
-
-		if ($escape || (!$saw_non_equal && /=/)) {
-			# ' -> '\''
-			s/'/'\\''/g;
-
-			# make multiple ' in a row look simpler
-			# '\'''\'''\'' -> '"'''"'
-			s|((?:'\\''){2,})|q{'"} . (q{'} x (length($1) / 4)) . q{"'}|ge;
-
-			$_ = "'$_'";
-			s/^''//;
-			s/''$//;
-		}
-	}
-
-	continue {
-		$ret .= "$_ ";
-	}
-
-	chop $ret;
-	return \@err, $ret;
-}
-
-sub shell_comment_quote {
-	return '' unless @_;
-
-	unless (@_ == 1) {
-		croak "Too many arguments to shell_comment_quote " . "(got " . @_ . " expected 1)";
-	}
-
-	local $_ = shift;
-	s/\n/\n#/g;
-	return $_;
-}
-
-sub shell_quote_best_effort {
-	my ($rerr, $s) = _shell_quote_backend @_;
-	return $s;
-}
-
-sub shell_quote {
-	my ($rerr, $s) = _shell_quote_backend @_;
-
-	if (@$rerr) {
-		my %seen;
-		@$rerr = grep { !$seen{$_}++ } @$rerr;
-		my $s  = join '', map { "shell_quote(): $_\n" } @$rerr;
-		chomp $s;
-		croak $s;
-	}
-	return $s;
-}
-
-###
-### End String::ShellQuote package
-###
-
-###
-### Begin git-follow(1)
-###
-
+# Current release version.
 my $GIT_FOLLOW_VERSION = "1.1.3";
 
 # If --version (or -V) was given as an option,
 # print the current version number and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	print "$GIT_FOLLOW_VERSION\n";
+	&show_version();
+}
 
-	exit 0;
+# If --total (or -T) was given as an option, print
+# total number of revisions for pathspec and exit.
+if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
+	&show_total();
 }
 
 ###
@@ -169,23 +58,23 @@ my $invalid_tagref_error    = "Not a valid tag.";
 my $invalid_refspec_combo   = "Only one --branch or one --tag option can be specified at a time.";
 my $invalid_usage_error     = <<"END_INVALID_USAGE_ERROR";
 
-	Usage: git follow [OPTIONS] [--] pathspec
+  Usage: git follow [OPTIONS] [--] pathspec
 
-	Options:
+  Options:
 
-	--branch,     -b <branchref>             Show commits specific to a branch.
-	--first,      -f                         Show first commit where Git initiated tracking of pathspec.
-	--func,       -F <funcname>              Show commits which affected function <funcname> in pathspec.
-	--last,       -l [<count>]               Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
-	--lines,      -L <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
-	--no-merges,  -M                         Show commits that have a maximum of one parent. See --no-merges of git-log(1).
-	--no-patch,   -N                         Suppress diff output. See --no-patch of git-log(1).
-	--no-renames, -O                         Disable rename detection. See --no-renames of git-log(1).
-	--range,      -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
-	--reverse,    -R                         Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
-	--tag,        -t <tagref>                Show commits specific to a tag.
-	--total,      -T                         Show total number of commits for pathspec.
-	--version,    -V                         Show current version number.
+    --branch,     -b <branchref>             Show commits for pathspec, specific to a branch.
+    --first,      -f                         Show first commit where Git initiated tracking of pathspec.
+    --func,       -F <funcname>              Show commits which affected function <funcname> in pathspec.
+    --last,       -l [<count>]               Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
+    --lines,      -L <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
+    --no-merges,  -M                         Show commits that have a maximum of one parent. See --no-merges of git-log(1).
+    --no-patch,   -N                         Suppress diff output. See --no-patch of git-log(1).
+    --no-renames, -O                         Disable rename detection. See --no-renames of git-log(1).
+    --range,      -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
+    --reverse,    -R                         Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
+    --tag,        -t <tagref>                Show commits for pathspec, specific to a tag.
+    --total,      -T                         Show total number of commits for pathspec.
+    --version,    -V                         Show current version number.
 
 END_INVALID_USAGE_ERROR
 
@@ -196,44 +85,38 @@ END_INVALID_USAGE_ERROR
 sub is_int;
 sub get_revr;
 sub get_format_ropt;
-sub rm_cflags;
+sub rm_copts;
 sub set_args;
 sub set_aux_opt;
-sub set_branchname;
-sub set_ns_pipe;
+sub set_refspec;
+sub show_total;
 
 # If `system` returns non-zero exit status, kill the script.
 !system("git rev-parse --is-inside-work-tree >/dev/null 2>&1") or die "$repo_not_found_error";
 
-my $argc = @ARGV;
-
 # If no arguments were given (e.g. `git follow`, no pathspec),
 # emit an error message with usage details and kill the script.
-$argc or die "$invalid_usage_error";
+@ARGV or die "$invalid_usage_error";
 
-# Name of pathspec given as an argument to git-follow.
-my $pathspec = pop @ARGV;
-
-if (! -e $pathspec) {
-	die "$invalid_pathspec_error";
-}
-
+# Options passed to `git-follow`.
 my %options;
 
+# Name of pathspec given as an argument to git-follow.
+my $pathspec = $ARGV[$#ARGV];
+
 # Logical separator used to help differentiate
-# between ambiguous flag options (and arguments),
+# between ambiguous options, option arguments,
 # branch/revision/tag refs, and valid pathspecs.
 my $lsep = "--";
 
-# Target refspec (when either `--branch` or `--tag` option is specified)
+# Target refspec (when either `--branch` or `--tag` option is specified).
 my $refspec = undef;
 
-# Default `git log` options
+# Default `git log` options.
 my %git_log_options = (
 	"follow"     => "--follow",
 	"format"     => "--format=$GIT_FOLLOW_LOG_FORMAT",
 	"graph"      => "--graph",
-	"no-renames" => "--no-renames",
 	"patch"      => "--patch-with-stat",
 );
 
@@ -253,7 +136,7 @@ my %copts = (
 	],
 );
 
-# Default argument values for flag options
+# Default argument values for options that accept arguments.
 my %dargs = (
 	"last"  => 1,
 	"lines" => 1,
@@ -264,19 +147,6 @@ my %dargs = (
 my @git_log = (
 	"git",
 	"log",
-);
-
-# Non-standard pipelines for use with alternate
-# syntax of `git log` and non `git log` commands.
-my %ns_pipes = (
-	"total" => [
-		"git",
-		"log",
-		"--follow",
-		"--format='%h'",
-		"$lsep",
-		"$pathspec",
-	]
 );
 
 # Determine if value is an integer.
@@ -295,33 +165,32 @@ sub get_revr {
 	my $revr_start = shift;
 	my $revr_end   = shift;
 
-	# If there was no end rev range,
-	# set default value to `HEAD`
+	# If no end rev was given, default to HEAD.
 	$revr_end = "HEAD" if not defined $revr_end;
 
 	# If only an integer was given, interpolate
 	# as a rev range for the current branch.
 	# --------------------------------------------
-	# @todo: Allow refname before '@{n}', either as flag option
-	# argument (e.g. --branchname master --range 3 5) or passed
-	# directly to `--range` (e.g. --range master 3 5).
+	# @todo: Allow refname before '@{n}', either as argument
+	# (e.g. --branch master --range 3 5), or passed directly
+	# to --range option (e.g. --range master 3 5).
 	$revr_start = "\@{$revr_start}" if &is_int($revr_start);
 	$revr_end   = "\@{$revr_end}" if &is_int($revr_end);
 
 	return "$revr_start..$revr_end";
 }
 
-# Format the `git log` flag with argument(s) given
+# Format the `git log` flag with argument(s) given.
 sub get_format_ropt {
-	my ($flag, @args) = @_;
+	my ($opt, @args) = @_;
 
-	if ($flag eq "first") {
+	if ($opt eq "first") {
 		return "--diff-filter=A";
-	} elsif ($flag eq "func") {
+	} elsif ($opt eq "func") {
 		my $funcname = shift @args;
 
 		return "-L^:$funcname:$pathspec";
-	} elsif ($flag eq "last") {
+	} elsif ($opt eq "last") {
 		my $num = shift @args;
 
 		if (!$num) {
@@ -329,34 +198,34 @@ sub get_format_ropt {
 		}
 
 		return "--max-count=$num";
-	} elsif ($flag eq "lines") {
+	} elsif ($opt eq "lines") {
 		my @nums  = shift @args;
 		my $lines = shift @nums;
 		my $start = @$lines[0];
 		my $end   = @$lines[1];
 
-		# If no end range was given, only specify the start and pathspec
+		# If no end range was given, only specify start and pathspec.
 		if (!$end) {
 			return "-L $start:$pathspec"
 		} else {
 			return "-L $start,$end:$pathspec";
 		}
-	} elsif ($flag eq "range") {
+	} elsif ($opt eq "range") {
 		my $revs       = shift @args;
 		my $revr_start = @$revs[0];
 		my $revr_end   = @$revs[1];
 
 		return &get_revr($revr_start, $revr_end);
 	} else {
-		return "--$flag";
+		return "--$opt";
 	}
 }
 
-# Remove conflicting `git log` flag options so
-# they're not passed to `system`, causing errors
+# Remove conflicting `git log` options so they're
+# not passed to `system`, causing conflict errors.
 sub rm_copts {
-	my $option = shift;
-	my $cnopts = $copts{$option};
+	my $opt = shift;
+	my $cnopts = $copts{$opt};
 
 	foreach (values @$cnopts) {
 		my $cnopt = shift @$cnopts;
@@ -385,19 +254,19 @@ sub set_aux_opt {
 	$git_log_options{$nopt} = $ropt;
 }
 
-# Update package-level `$refspec` with ref given via --branch or --tag
+# Update package-level `$refspec` with ref given via --branch or --tag.
 sub set_refspec {
 	# If `$refspec` is already defined, notify the user and emit an error,
-	# as you can't give both `--branch` and `--tag` options simultaneously
+	# as you can't give both `--branch` and `--tag` options simultaneously.
 	if (defined $refspec) {
 		die "$invalid_refspec_combo";
 	}
 
-	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5')
-	my ($flag, $ref) = @_;
+	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5').
+	my ($opt, $ref) = @_;
 
-	my $refs = `git $flag --list`;
-	my $remotes = `git branch -r` if $flag eq "branch";
+	my $refs = `git $opt --list`;
+	my $remotes = `git branch -r` if $opt eq "branch";
 	$refs = $refs . $remotes if defined $remotes;
 
 	# Filter asterisk, escape codes from `git {branch,tag} --list`.
@@ -408,7 +277,7 @@ sub set_refspec {
 	my @refspecs = split "\n", $refs;
 	@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
 
-	# If `$ref` is indeed a valid refspec, update `$refspec`
+	# If `$ref` is indeed a valid refspec, update `$refspec`.
 	if (grep /^$ref$/, @refspecs) {
 		$refspec = $ref;
 	} else {
@@ -417,31 +286,38 @@ sub set_refspec {
 		# ------------------------------------
 		# @todo Create a hash for mapping refs
 		# to their subsequent error messages
-		if ($flag eq "branch") {
+		if ($opt eq "branch") {
 			die "$invalid_branchref_error";
-		} elsif ($flag eq "tag") {
+		} elsif ($opt eq "tag") {
 			die "$invalid_tagref_error";
 		}
 	}
 }
 
-# Set non-standard pipeline that either circumvents `git log`, or uses
-# an alternate syntax, which is essential for flag options like `--total`
-sub set_ns_pipe {
-	my $flag = shift;
-	my $pipe = $ns_pipes{$flag};
+# Show total number of commits for pathspec.
+sub show_total {
+	my $fopt = (grep { $_ eq "--no-renames" || $_ eq "-O" } @ARGV)
+	         ? "--no-renames"
+	         : "--follow";
 
-	if ($flag eq "total") {
-		my $command = &shell_quote(@$pipe);
+	my $path = (defined $pathspec)
+	         ? $pathspec
+	         : $ARGV[$#ARGV];
 
-		# Array of abbreviated commit hashes
-		my @hashes = `$command`;
-		my $total  = @hashes;
+	# Array of abbreviated commit hashes.
+	my @hashes = `git log $fopt --format=\"%h\" -- $path`;
 
-		print "$total\n";
+	print scalar @hashes;
+	print "\n";
 
-		exit 0;
-	}
+	exit 0;
+}
+
+# Show current release version.
+sub show_version {
+	print "$GIT_FOLLOW_VERSION\n";
+
+	exit 0;
 }
 
 Getopt::Long::Configure(
@@ -463,7 +339,7 @@ Getopt::Long::GetOptions(
 	'range|r=s@{1,2}',
 	'reverse|R'        => \&set_aux_opt,
 	'tag|t=s{1,1}'     => \&set_refspec,
-	'total|T'          => \&set_ns_pipe,
+	'total|T',
 	'version|V',
 ) or die "$invalid_usage_error";
 
@@ -472,9 +348,9 @@ Getopt::Long::GetOptions(
 my @command = ();
 
 # Iterate through options and option arguments (if applicable).
-while (my ($flag, $args) = each %options) {
-	my $rflag = &get_format_ropt($flag, $args);
-	push @command, $rflag;
+while (my ($opt, $args) = each %options) {
+	my $ropt = &get_format_ropt($opt, $args);
+	push @command, $ropt;
 }
 
 # If `$GIT_FOLLOW_NO_PAGER` is defined,
@@ -500,10 +376,6 @@ system @command;
 
 1;
 
-###
-### End git-follow(1)
-###
-
 __END__
 
 =pod
@@ -518,10 +390,6 @@ __END__
 
 	version 1.1.3
 
-=head1 SYNOPSIS
-
-	git follow [OPTIONS] [--] pathspec
-
 =head1 DESCRIPTION
 
 	Follow lifetime changes of a pathspec in Git. git-follow(1) makes analyzing changes of a pathspec trivial with robust options and simplified log output.
@@ -535,12 +403,12 @@ __END__
 		Log format. See --format of git-log(1) for syntax.
 
 	GIT_FOLLOW_NO_PAGER
-		No pager mode. Defaults to 0. Set to 1 to prevent Git from using a pager. See --no-pager of git(1) for details.
+		Disable pager. Defaults to 0. Set to 1 to disable pager. Has equivalent effect of 'git --no-pager follow ...'. See --no-pager of git(1).
 
 =head1 OPTIONS
 
 	--branch, -b <branchref>
-		Show commits specific to a branch.
+		Show commits for pathspec, specific to a branch.
 
 	--first, -f
 		Show first commit where Git initiated tracking of pathspec.
@@ -570,7 +438,7 @@ __END__
 		Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
 
 	--tag, -t <tagref>
-		Show commits specific to a tag.
+		Show commits for pathspec, specific to a tag.
 
 	--total, -T
 		Show total number of commits for pathspec.
