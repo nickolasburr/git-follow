@@ -125,6 +125,7 @@ my $refspec = undef;
 
 # Default `git log` options.
 my %git_log_options = (
+	"m"          => "-m",
 	"follow"     => "--follow",
 	"format"     => "--format=$GIT_FOLLOW_LOG_FORMAT",
 	"graph"      => "--graph",
@@ -135,6 +136,9 @@ my @git_log_option_values;
 
 # Options and their conflicting counterparts.
 my %copts = (
+	"no-merges"  => [
+		"m",
+	],
 	"no-patch"   => [
 		"patch",
 	],
