@@ -54,7 +54,7 @@ my $GIT_FOLLOW_NO_PAGER   = (defined $ENV{'GIT_FOLLOW_NO_PAGER'})
 
 my $invalid_repo_err  = "%s is not a Git repository.\n";
 my $invalid_repo_hint = "FYI: If you don't want to change directories, you can run 'git -C /path/to/repository follow ...'\n";
-my $invalid_pathspec  = "%s is not a valid pathspec.\n";
+my $invalid_path_err  = "%s is not a valid pathspec.\n";
 my $invalid_branchref = "%s is not a valid branch.\n";
 my $invalid_tagref    = "%s is not a valid tag.\n";
 my $invalid_ref_combo = "Only one --branch or one --tag option can be specified at a time.\n";
@@ -69,10 +69,10 @@ my $usage_synopsis    = <<"END_USAGE_SYNOPSIS";
     --func,       -F <funcname>              Show commits which affected function <funcname> in pathspec.
     --last,       -l [<count>]               Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
     --lines,      -L <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
-    --no-merges,  -M                         Show commits that have a maximum of one parent. See --no-merges of git-log(1).
+    --no-merges,  -M                         Show commits which have a maximum of one parent. See --no-merges of git-log(1).
     --no-patch,   -N                         Suppress diff output. See --no-patch of git-log(1).
     --no-renames, -O                         Disable rename detection. See --no-renames of git-log(1).
-    --pickaxe,    -P <string>                Show commits which change the number of occurrences of `<string>` in pathspec. See -S of git-log(1).
+    --pickaxe,    -P <string>                Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).
     --range,      -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
     --reverse,    -R                         Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
     --tag,        -t <tagref>                Show commits for pathspec, specific to a tag.
@@ -86,6 +86,7 @@ END_USAGE_SYNOPSIS
 ###
 
 sub is_int;
+sub is_pathspec;
 sub get_revr;
 sub get_format_ropt;
 sub rm_copts;
@@ -104,8 +105,8 @@ sub show_version;
 # If `system` returns non-zero exit status, kill the script.
 if (system("git rev-parse --is-inside-work-tree &>/dev/null")) {
 	# @todo: Build option to silence FYI output.
-	my $invalid_usage = sprintf("%s\n%s", sprintf($invalid_repo_err, getcwd), $invalid_repo_hint);
-	die "$invalid_usage";
+	my $invalid_repo = sprintf("%s\n%s", sprintf($invalid_repo_err, getcwd), $invalid_repo_hint);
+	die "$invalid_repo";
 }
 
 # Options passed to git-follow.
@@ -168,6 +169,16 @@ sub is_int {
 	} else {
 		return 0;
 	}
+}
+
+# Determine if pathspec is a valid file object.
+sub is_pathspec {
+	my ($refname, $target) = @_;
+
+	# Validate pathspec via git-cat-file.
+	system("git cat-file -e $refname:$target &>/dev/null");
+
+	return !($? >> 8);
 }
 
 # Get rev range for the given pathspec.
@@ -306,7 +317,7 @@ sub set_refspec {
 
 # Show total number of commits for pathspec.
 sub show_total {
-	# Whether to follow renames or not.
+	# Whether to use rename detection or stop at renames.
 	my $fopt = (grep { $_ eq "--no-renames" || $_ eq "-O" } @ARGV)
 	         ? "--no-renames"
 	         : "--follow";
@@ -367,24 +378,32 @@ while (my ($opt, $args) = each %options) {
 	push @command, $ropt;
 }
 
-# If `$GIT_FOLLOW_NO_PAGER` is defined,
-# pass `--no-pager` option to `git`.
+# If GIT_FOLLOW_NO_PAGER is defined,
+# pass --no-pager option to git.
 if (defined $GIT_FOLLOW_NO_PAGER) {
 	my $git = shift @git_log;
 	unshift @git_log, ($git, "--no-pager");
 }
 
-# Update `@git_log_option_values` with
-# corresponding `git log` options.
+# Update @git_log_option_values with
+# corresponding git-log options.
 @git_log_option_values = values %git_log_options;
 
 # Change the diff style, if applicable.
 unshift @git_log_option_values, $GIT_FOLLOW_DIFF_MODE if defined $GIT_FOLLOW_DIFF_MODE;
 unshift @command, @git_log, @git_log_option_values;
 
-# Add refspec, if given as an argument to --branch or --tag.
-push @command, $refspec if defined $refspec;
-push @command, $lsep, $pathspec;
+# Set default refspec if not given explicitly via --branch, --tag.
+$refspec = "HEAD" if not defined $refspec;
+
+# If pathspec was not a valid file object,
+# emit an error and kill the script.
+if (!&is_pathspec($refspec, $pathspec)) {
+	my $invalid_pathspec = sprintf($invalid_path_err, $pathspec);
+	die "$invalid_pathspec";
+}
+
+push @command, $refspec, $lsep, $pathspec;
 
 system @command;
 
@@ -437,7 +456,7 @@ __END__
 		Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
 
 	--no-merges, -M
-		Show commits that have a maximum of one parent. See --no-merges of git-log(1).
+		Show commits which have a maximum of one parent. See --no-merges of git-log(1).
 
 	--no-patch, -N
 		Suppress diff output. See --no-patch of git-log(1).
