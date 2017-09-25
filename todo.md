@@ -6,7 +6,7 @@ None reported.
 
 ### Upcoming Features
 
-+ Add `--diff-algorithm` option to specify the diff algorithm. Also includes support for `--minimal`, `--patience`, and `histogram` options.
++ Add `--diff-algorithm` option to specify the diff algorithm. Also includes support for `--minimal`, `--patience`, and `--histogram` options.
 
 ### Potential Features
 
