@@ -4,12 +4,12 @@
 
 ## Installation
 
-You can install `git-follow` via Homebrew or manually. See the [tap repository](https://github.com/nickolasburr/homebrew-git-follow) for tap-specific information.
+You can install `git-follow` via Homebrew or manually. See the [tap repository](https://github.com/nickolasburr/homebrew-pfa) for tap-specific information.
 
 ### Homebrew
 
 ```shell
-brew tap nickolasburr/git-follow
+brew tap nickolasburr/pfa
 brew install git-follow
 ```
 
