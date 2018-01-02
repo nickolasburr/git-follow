@@ -1,24 +1,26 @@
 ###
-### git-follow(1) subroutines
+### git-follow(1) subroutines.
 ###
 
 use 5.008;
 use strict;
 use warnings;
-
-# Current release version.
-my $GIT_FOLLOW_VERSION = "1.1.4";
+require "common.pl"
 
 ###
 ### User errors, notices.
 ###
 
-my $INVALID_BRANCHREF = "%s is not a valid branch.\n";
-my $INVALID_TAGREF    = "%s is not a valid tag.\n";
-my $INVALID_REF_COMBO = "Only one --branch or one --tag option can be specified at a time.\n";
+our $INVALID_BRANCHREF;
+our $INVALID_TAGREF;
+our $INVALID_REF_COMBO;
+
+our %options;
+our $pathspec;
+our $refspec;
 
 # Options and their conflicting counterparts.
-my %copts = (
+our %copts = (
 	"no-merges"  => [
 		"m",
 	],
@@ -35,9 +37,17 @@ my %copts = (
 );
 
 # Default argument values for options that accept arguments.
-my %dargs = (
+our %dargs = (
 	"last"  => 1,
 	"lines" => 1,
+);
+
+our %git_log_options = (
+	"m"      => "-m",
+	"follow" => "--follow",
+	"format" => "--format=$GIT_FOLLOW_LOG_FORMAT",
+	"graph"  => "--graph",
+	"patch"  => "--patch-with-stat",
 );
 
 sub is_int;
@@ -94,7 +104,7 @@ sub get_revr {
 
 # Format the `git log` option with argument(s) given.
 sub get_format_ropt {
-	my ($opt, @args, $pathspec) = @_;
+	my ($opt, @args) = @_;
 
 	if ($opt eq "first") {
 		return "--diff-filter=A";
@@ -140,18 +150,18 @@ sub get_format_ropt {
 # Remove conflicting `git log` options so they're
 # not passed to `system`, causing conflict errors.
 sub rm_copts {
-	my ($opt, %options) = @_;
+	my ($opt) = @_;
 	my $cnopts = $copts{$opt};
 
 	foreach (values @$cnopts) {
 		my $cnopt = shift @$cnopts;
-		delete $options{$cnopt} if exists $options{$cnopt};
+		delete $git_log_options{$cnopt} if exists $git_log_options{$cnopt};
 	}
 }
 
 # Set argument for `$opt`, whether given to the option or default.
 sub set_args {
-	my ($opt, $arg, %options) = @_;
+	my ($opt, $arg) = @_;
 
 	# Update %options hash with either the given option
 	# argument or with the default option argument.
@@ -171,8 +181,6 @@ sub set_unary_opt {
 
 # Update package-level `$refspec` with ref given via --branch or --tag.
 sub set_refspec {
-	my ($refspec) = @_;
-
 	# If `$refspec` is already defined, notify the user and emit an error,
 	# as you can't give both `--branch` and `--tag` options simultaneously.
 	if (defined $refspec) {

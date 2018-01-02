@@ -11,7 +11,17 @@ use strict;
 use warnings;
 use Cwd qw(getcwd);
 use Getopt::Long;
+require "src/common.pl";
 require "src/subs.pl";
+
+our $GIT_FOLLOW_DIFF_MODE;
+our $GIT_FOLLOW_LOG_FORMAT;
+our $GIT_FOLLOW_NO_PAGER;
+
+our $INVALID_PATH_ERR;
+our $INVALID_REPO_ERR;
+our $INVALID_REPO_HINT;
+our $USAGE_SYNOPSIS;
 
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
@@ -25,57 +35,6 @@ if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
 	&show_total();
 }
 
-###
-### Environment variables
-###
-
-# Diff mode for patch views (defaults to inline).
-my $GIT_FOLLOW_DIFF_MODE  = (defined $ENV{'GIT_FOLLOW_DIFF_MODE'})
-                          ? $ENV{'GIT_FOLLOW_DIFF_MODE'}
-                          : undef;
-
-# Log format. Defaults to the following format:
-# --------------------------------------------------------------
-# commit (tree) - subject - author name <author email> [timestamp]
-my $GIT_FOLLOW_LOG_FORMAT = (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'})
-                          ? $ENV{'GIT_FOLLOW_LOG_FORMAT'}
-                          : "%C(bold cyan)%h%Creset (%C(bold magenta)%t%Creset) - %s - %C(bold blue)%an%Creset <%C(bold yellow)%ae%Creset> [%C(bold green)%cr%Creset]";
-
-# Disable pager. Defaults to 0 (use pager).
-my $GIT_FOLLOW_NO_PAGER   = (defined $ENV{'GIT_FOLLOW_NO_PAGER'})
-                          ? $ENV{'GIT_FOLLOW_NO_PAGER'}
-                          : undef;
-
-###
-### Usage synopsis, details.
-###
-
-my $INVALID_REPO_ERR  = "%s is not a Git repository.\n";
-my $INVALID_REPO_HINT = "FYI: If you don't want to change directories, you can run 'git -C /path/to/repository follow ...'\n";
-my $INVALID_PATH_ERR  = "%s is not a valid pathspec.\n";
-my $USAGE_SYNOPSIS    = <<"END_USAGE_SYNOPSIS";
-
-  Usage: git follow [OPTIONS] [--] pathspec
-
-  Options:
-
-    --branch,     -b <branchref>             Show commits for pathspec, specific to a branch.
-    --first,      -f                         Show first commit where Git initiated tracking of pathspec.
-    --func,       -F <funcname>              Show commits which affected function <funcname> in pathspec.
-    --last,       -l [<count>]               Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
-    --lines,      -L <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
-    --no-merges,  -M                         Show commits which have a maximum of one parent. See --no-merges of git-log(1).
-    --no-patch,   -N                         Suppress diff output. See --no-patch of git-log(1).
-    --no-renames, -O                         Disable rename detection. See --no-renames of git-log(1).
-    --pickaxe,    -P <string>                Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).
-    --range,      -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
-    --reverse,    -R                         Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
-    --tag,        -t <tagref>                Show commits for pathspec, specific to a tag.
-    --total,      -T                         Show total number of commits for pathspec.
-    --version,    -V                         Show current release version.
-
-END_USAGE_SYNOPSIS
-
 # If no arguments were given (e.g. `git follow`, no pathspec),
 # emit an error message with usage details and kill the script.
 # We'll place this before the repository check, in case a user
@@ -86,16 +45,19 @@ END_USAGE_SYNOPSIS
 if (system("git rev-parse --is-inside-work-tree &>/dev/null")) {
 	# @todo: Build option to silence FYI output.
 	my $INVALID_REPO = sprintf("%s\n%s", sprintf($INVALID_REPO_ERR, getcwd), $INVALID_REPO_HINT);
+
 	die "$INVALID_REPO";
 }
 
-# Options passed to git-follow.
-my %options;
+our %git_log_options;
+our @git_log_option_values;
+our %options;
+our $pathspec;
+our $refspec;
 
 # Name of pathspec given as an argument to git-follow.
-my $pathspec = $ARGV[$#ARGV];
-
-my $refspec = undef;
+$pathspec = $ARGV[$#ARGV];
+$refspec = undef;
 
 # Logical separator used to help differentiate
 # between ambiguous options, option arguments,
@@ -103,15 +65,13 @@ my $refspec = undef;
 my $lsep = "--";
 
 # Default `git log` options.
-my %git_log_options = (
+%git_log_options = (
 	"m"          => "-m",
 	"follow"     => "--follow",
 	"format"     => "--format=$GIT_FOLLOW_LOG_FORMAT",
 	"graph"      => "--graph",
 	"patch"      => "--patch-with-stat",
 );
-
-my @git_log_option_values;
 
 # Base components of `git log` shell command, represented
 # as an array to make it easier to pass to `system` builtin.
