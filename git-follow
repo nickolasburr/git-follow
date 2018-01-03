@@ -18,13 +18,13 @@ use GitFollow::Core;
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	&show_version();
+	&GitFollow::Core::show_version();
 }
 
 # If --total (or -T) was given as an option, print
 # total number of revisions for pathspec and exit.
 if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
-	&show_total();
+	&GitFollow::Core::show_total();
 }
 
 # If no arguments were given (e.g. `git follow`, no pathspec),
