@@ -4,7 +4,7 @@
 
 ## Installation
 
-You can install `git-follow` via Homebrew or manually. See the [tap repository](https://github.com/nickolasburr/homebrew-pfa) for tap-specific information.
+You can install `git-follow` via Homebrew or manually.
 
 ### Homebrew
 
@@ -15,24 +15,14 @@ brew install git-follow
 
 ### Manual
 
-Add `git-follow` to your `PATH` (e.g. `/usr/local/bin`).
-
-```shell
-cd /usr/local/bin && curl -sSL -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow
+```
+git clone https://github.com/nickolasburr/git-follow.git
+cd git-follow
+make
 ```
 
-Make sure the file is executable via `chmod`:
-
-```shell
-# => /usr/local/bin
-chmod +x git-follow
-```
-
-`git-follow` also provides a man page for reference. To install the man page:
-
-```shell
-cd /usr/share/man/man1 && curl -sSL -O https://raw.githubusercontent.com/nickolasburr/git-follow/master/git-follow.1.gz
-```
+By default, the `git-follow` executable is installed to `/usr/local/bin` and the man page is installed to `/usr/local/share/man/man1`.
+You can install to an alternate location by passing the `PREFIX` option to `make`.
 
 Once installed, you can view the man page by either specifying the `--help` option (e.g. `git follow --help`) or by typing `man git-follow`.
 
