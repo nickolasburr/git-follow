@@ -9,19 +9,11 @@
 use 5.008;
 use strict;
 use warnings;
+use lib "src";
 use Cwd qw(getcwd);
+use File::Basename;
 use Getopt::Long;
-require "src/common.pl";
-require "src/subs.pl";
-
-our $GIT_FOLLOW_DIFF_MODE;
-our $GIT_FOLLOW_LOG_FORMAT;
-our $GIT_FOLLOW_NO_PAGER;
-
-our $INVALID_PATH_ERR;
-our $INVALID_REPO_ERR;
-our $INVALID_REPO_HINT;
-our $USAGE_SYNOPSIS;
+use GitFollow::Core;
 
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
@@ -39,46 +31,24 @@ if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
 # emit an error message with usage details and kill the script.
 # We'll place this before the repository check, in case a user
 # is running `git follow` purely for the usage information.
-@ARGV or die "$USAGE_SYNOPSIS";
+@ARGV or die "$GitFollow::Core::USAGE_SYNOPSIS";
 
 # If `system` returns non-zero exit status, kill the script.
 if (system("git rev-parse --is-inside-work-tree &>/dev/null")) {
 	# @todo: Build option to silence FYI output.
-	my $INVALID_REPO = sprintf("%s\n%s", sprintf($INVALID_REPO_ERR, getcwd), $INVALID_REPO_HINT);
+	my $INVALID_REPO = sprintf("%s\n%s", sprintf($GitFollow::Core::INVALID_REPO_ERR, getcwd), $GitFollow::Core::INVALID_REPO_HINT);
 
 	die "$INVALID_REPO";
 }
 
-our %git_log_options;
-our @git_log_option_values;
-our %options;
-our $pathspec;
-our $refspec;
-
 # Name of pathspec given as an argument to git-follow.
-$pathspec = $ARGV[$#ARGV];
-$refspec = undef;
+$GitFollow::Core::pathspec = $ARGV[$#ARGV];
 
-# Logical separator used to help differentiate
-# between ambiguous options, option arguments,
-# branch/revision/tag refs, and valid pathspecs.
-my $lsep = "--";
+if ($GitFollow::Core::pathspec eq ".") {
+	$GitFollow::Core::pathspec = File::Basename::basename(getcwd);
+}
 
-# Default `git log` options.
-%git_log_options = (
-	"m"          => "-m",
-	"follow"     => "--follow",
-	"format"     => "--format=$GIT_FOLLOW_LOG_FORMAT",
-	"graph"      => "--graph",
-	"patch"      => "--patch-with-stat",
-);
-
-# Base components of `git log` shell command, represented
-# as an array to make it easier to pass to `system` builtin.
-my @git_log = (
-	"git",
-	"log",
-);
+$GitFollow::Core::refspec = undef;
 
 Getopt::Long::Configure(
 	"no_auto_abbrev",
@@ -87,59 +57,58 @@ Getopt::Long::Configure(
 );
 
 Getopt::Long::GetOptions(
-	\%options,
-	'branch|b=s{1,1}'  => \&set_refspec,
+	\%GitFollow::Core::options,
+	'branch|b=s{1,1}'  => \&GitFollow::Core::set_refspec,
 	'first|f',
 	'func|F=s{1,1}',
-	'last|l=i{0,1}'    => \&set_args,
+	'last|l=i{0,1}'    => \&GitFollow::Core::set_args,
 	'lines|L=i@{1,2}',
-	'no-merges|M'      => \&set_unary_opt,
-	'no-patch|N'       => \&set_unary_opt,
-	'no-renames|O'     => \&set_unary_opt,
+	'no-merges|M'      => \&GitFollow::Core::set_unary_opt,
+	'no-patch|N'       => \&GitFollow::Core::set_unary_opt,
+	'no-renames|O'     => \&GitFollow::Core::set_unary_opt,
 	'pickaxe|P=s{1,1}',
 	'range|r=s@{1,2}',
-	'reverse|R'        => \&set_unary_opt,
-	'tag|t=s{1,1}'     => sub { &set_refspec($refspec) },
+	'reverse|R'        => \&GitFollow::Core::set_unary_opt,
+	'tag|t=s{1,1}'     => \&GitFollow::Core::set_refspec,
 	'total|T',
 	'version|V',
-) or die "$USAGE_SYNOPSIS";
+) or die "$GitFollow::Core::USAGE_SYNOPSIS";
 
 # Map to `git log` options, format the
 # command and pass to `system` builtin.
 my @command = ();
 
 # Iterate through options and option arguments (if applicable).
-while (my ($opt, $args) = each %options) {
-	my $ropt = &get_format_ropt($opt, $args);
-	push @command, $ropt;
+while (my ($opt, $args) = each %GitFollow::Core::options) {
+	push @command, &GitFollow::Core::get_format_ropt($opt, $args);
 }
 
 # If GIT_FOLLOW_NO_PAGER is defined,
 # pass --no-pager option to git.
-if (defined $GIT_FOLLOW_NO_PAGER) {
-	my $git = shift @git_log;
-	unshift @git_log, ($git, "--no-pager");
+if (defined $GitFollow::Core::GIT_FOLLOW_NO_PAGER) {
+	my $git = shift @GitFollow::Core::git_log;
+
+	unshift @GitFollow::Core::git_log, ($git, "--no-pager");
 }
 
-# Update @git_log_option_values with
-# corresponding git-log options.
-@git_log_option_values = values %git_log_options;
+# Update @git_log_option_values with corresponding git-log options.
+@GitFollow::Core::git_log_option_values = values %GitFollow::Core::git_log_options;
 
 # Change the diff style, if applicable.
-unshift @git_log_option_values, $GIT_FOLLOW_DIFF_MODE if defined $GIT_FOLLOW_DIFF_MODE;
-unshift @command, @git_log, @git_log_option_values;
+unshift @GitFollow::Core::git_log_option_values, $GitFollow::Core::GIT_FOLLOW_DIFF_MODE if defined $GitFollow::Core::GIT_FOLLOW_DIFF_MODE;
+unshift @command, @GitFollow::Core::git_log, @GitFollow::Core::git_log_option_values;
 
 # Set default refspec if not given explicitly via --branch, --tag.
-$refspec = "HEAD" if not defined $refspec;
+$GitFollow::Core::refspec = "HEAD" if not defined $GitFollow::Core::refspec;
 
-# If pathspec was not a valid file object,
-# emit an error and kill the script.
-if (!&is_pathspec($refspec, $pathspec)) {
-	my $INVALID_PATHSPEC = sprintf($INVALID_PATH_ERR, $pathspec);
+# If pathspec was not a valid file object, emit an error and kill the script.
+if (!&GitFollow::Core::is_pathspec($GitFollow::Core::refspec, $GitFollow::Core::pathspec)) {
+	my $INVALID_PATHSPEC = sprintf($GitFollow::Core::INVALID_PATH_ERR, $GitFollow::Core::pathspec);
+
 	die "$INVALID_PATHSPEC";
 }
 
-push @command, $refspec, $lsep, $pathspec;
+push @command, $GitFollow::Core::refspec, "--", $GitFollow::Core::pathspec;
 system @command;
 
 1;
