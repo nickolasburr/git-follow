@@ -16,6 +16,9 @@ our @EXPORT_OK = qw(
 	set_unary_opt
 );
 
+# Default git-log format.
+our $GIT_FOLLOW_DEF_LOG_FMT = "%C(bold cyan)%h%Creset (%C(bold magenta)%t%Creset) - %s - %C(bold blue)%an%Creset <%C(bold yellow)%ae%Creset> [%C(bold green)%cr%Creset]";
+
 # Current release version.
 our $GIT_FOLLOW_VERSION = "1.1.4";
 
@@ -23,22 +26,34 @@ our $GIT_FOLLOW_VERSION = "1.1.4";
 ### Environment variables.
 ###
 
+our $GIT_FOLLOW_DIFF_MODE  = undef;
+our $GIT_FOLLOW_LOG_FORMAT = undef;
+our $GIT_FOLLOW_NO_PAGER   = undef;
+
 # Diff mode for patch views (defaults to inline).
-our $GIT_FOLLOW_DIFF_MODE  = (defined $ENV{'GIT_FOLLOW_DIFF_MODE'})
-                           ? $ENV{'GIT_FOLLOW_DIFF_MODE'}
-                           : undef;
+if (&has_config('diff', 'mode')) {
+	$GIT_FOLLOW_DIFF_MODE = &get_config('diff', 'mode');
+} elsif (defined $ENV{'GIT_FOLLOW_DIFF_MODE'}) {
+	$GIT_FOLLOW_DIFF_MODE = $ENV{'GIT_FOLLOW_DIFF_MODE'}
+}
 
 # Log format. Defaults to the following format:
 # --------------------------------------------------------------
 # commit (tree) - subject - author name <author email> [timestamp]
-our $GIT_FOLLOW_LOG_FORMAT = (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'})
-                           ? $ENV{'GIT_FOLLOW_LOG_FORMAT'}
-                           : "%C(bold cyan)%h%Creset (%C(bold magenta)%t%Creset) - %s - %C(bold blue)%an%Creset <%C(bold yellow)%ae%Creset> [%C(bold green)%cr%Creset]";
+if (&has_config('log', 'format')) {
+	$GIT_FOLLOW_LOG_FORMAT = &get_config('log', 'format');
+} elsif (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'}) {
+	$GIT_FOLLOW_LOG_FORMAT = $ENV{'GIT_FOLLOW_LOG_FORMAT'};
+} else {
+	$GIT_FOLLOW_LOG_FORMAT = $GIT_FOLLOW_DEF_LOG_FMT;
+}
 
 # Disable pager. Defaults to 0 (use pager).
-our $GIT_FOLLOW_NO_PAGER   = (defined $ENV{'GIT_FOLLOW_NO_PAGER'})
-                           ? $ENV{'GIT_FOLLOW_NO_PAGER'}
-                           : undef;
+if (&has_config('pager', 'disabled')) {
+	$GIT_FOLLOW_NO_PAGER = &get_config('pager', 'disabled');
+} elsif (defined $ENV{'GIT_FOLLOW_NO_PAGER'}) {
+	$GIT_FOLLOW_NO_PAGER = $ENV{'GIT_FOLLOW_NO_PAGER'};
+}
 
 ###
 ### User errors, notices, hints, etc.
@@ -101,6 +116,13 @@ our %dargs = (
 	"lines" => 1,
 );
 
+# Diff modes and their git-log option counterparts.
+our %diffopts = (
+	"inline"   => "none",
+	"sxs"      => "plain",
+	"colorsxs" => "color",
+);
+
 # Base components of `git log` shell command, represented
 # as an array to make it easier to pass to `system` builtin.
 our @git_log = (
@@ -120,6 +142,8 @@ our %git_log_options = (
 ### git-follow(1) subroutines.
 ###
 
+sub get_config;
+sub has_config;
 sub is_int;
 sub is_pathspec;
 sub get_revr;
@@ -130,6 +154,40 @@ sub set_unary_opt;
 sub set_refspec;
 sub show_total;
 sub show_version;
+
+# Get git config value.
+sub get_config {
+	my ($key, $qual) = @_;
+	my $config = undef;
+
+	system("git config follow.$key.$qual >/dev/null");
+
+	if (!$?) {
+		$config = `git config follow.$key.$qual`;
+	} else {
+		$config = `git config follow.$key$qual`;
+	}
+
+	# Strip trailing newline from config value.
+	chomp $config;
+
+	return $config;
+}
+
+# Check if git config key exists.
+sub has_config {
+	my ($key, $qual) = @_;
+
+	system("git config follow.$key.$qual >/dev/null");
+
+	if (!$?) {
+		return 1;
+	}
+
+	system("git config follow.$key$qual >/dev/null");
+
+	!$?;
+}
 
 # Determine if value is an integer.
 sub is_int {
