@@ -18,13 +18,13 @@ use GitFollow::Core;
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	&GitFollow::Core::show_version();
+	GitFollow::Core::show_version();
 }
 
 # If --total (or -T) was given as an option, print
 # total number of revisions for pathspec and exit.
 if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
-	&GitFollow::Core::show_total();
+	GitFollow::Core::show_total();
 }
 
 # If no arguments were given (e.g. `git follow`, no pathspec),
@@ -42,11 +42,9 @@ if (system("git rev-parse --is-inside-work-tree &>/dev/null")) {
 }
 
 # Name of pathspec given as an argument to git-follow.
-$GitFollow::Core::pathspec = $ARGV[$#ARGV];
-
-if ($GitFollow::Core::pathspec eq ".") {
-	$GitFollow::Core::pathspec = File::Basename::basename(getcwd);
-}
+$GitFollow::Core::pathspec = ($ARGV[$#ARGV] eq ".")
+                           ? File::Basename::basename(getcwd)
+                           : $ARGV[$#ARGV];
 
 $GitFollow::Core::refspec = undef;
 
@@ -80,12 +78,11 @@ my @command = ();
 
 # Iterate through options and option arguments (if applicable).
 while (my ($opt, $args) = each %GitFollow::Core::options) {
-	push @command, &GitFollow::Core::get_format_ropt($opt, $args);
+	push @command, GitFollow::Core::get_format_ropt($opt, $args);
 }
 
-# If GIT_FOLLOW_NO_PAGER is defined,
-# pass --no-pager option to git.
-if (defined $GitFollow::Core::GIT_FOLLOW_NO_PAGER) {
+# If GIT_FOLLOW_NO_PAGER is defined, pass --no-pager option to git.
+if (defined $GitFollow::Core::GIT_FOLLOW_NO_PAGER && $GitFollow::Core::GIT_FOLLOW_NO_PAGER eq "true") {
 	my $git = shift @GitFollow::Core::git_log;
 
 	unshift @GitFollow::Core::git_log, ($git, "--no-pager");
@@ -95,8 +92,10 @@ if (defined $GitFollow::Core::GIT_FOLLOW_NO_PAGER) {
 @GitFollow::Core::git_log_option_values = values %GitFollow::Core::git_log_options;
 
 # Change the diff style, if applicable.
-unshift @GitFollow::Core::git_log_option_values, $GitFollow::Core::GIT_FOLLOW_DIFF_MODE if defined $GitFollow::Core::GIT_FOLLOW_DIFF_MODE;
-unshift @command, @GitFollow::Core::git_log, @GitFollow::Core::git_log_option_values;
+if (defined $GitFollow::Core::GIT_FOLLOW_DIFF_MODE) {
+	unshift @GitFollow::Core::git_log_option_values, "--word-diff=$GitFollow::Core::diffopts{$GitFollow::Core::GIT_FOLLOW_DIFF_MODE}";
+	unshift @command, @GitFollow::Core::git_log, @GitFollow::Core::git_log_option_values;
+}
 
 # Set default refspec if not given explicitly via --branch, --tag.
 $GitFollow::Core::refspec = "HEAD" if not defined $GitFollow::Core::refspec;
