@@ -10,13 +10,20 @@ if [[ ! -d "$PREFIX" ]]; then
 	exit 1
 fi
 
+TARGET="git-follow"
+
 BINDIR="$PREFIX/bin"
+ETCDIR="$PREFIX/etc"
+MDLDIR="$ETCDIR/$TARGET"
+
+MANPAGE="$TARGET.1.gz"
+MANDEST="$PREFIX/share/man/man1"
 
 RM="rm"
 RMFLAGS="-rf"
 
-TARGET="git-follow"
-MANPAGE="$TARGET.1.gz"
-MANDEST="$PREFIX/share/man/man1"
-
 eval "$RM $RMFLAGS $BINDIR/$TARGET $MANDEST/$MANPAGE"
+
+if [[ -d "$MDLDIR" ]]; then
+	eval "$RM $RMFLAGS $MDLDIR"
+fi
