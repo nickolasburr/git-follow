@@ -1,5 +1,7 @@
 ###
-### git-follow(1) core package.
+### git-follow - Follow lifetime changes of a pathspec in Git.
+###
+### Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
 ###
 
 package GitFollow::Core;
@@ -16,8 +18,18 @@ our @EXPORT_OK = qw(
 	set_unary_opt
 );
 
+our %colors = (
+	"h"  => "bold cyan",
+	"t"  => "bold magenta",
+	"an" => "bold blue",
+	"ae" => "bold yellow",
+	"cr" => "bold green",
+);
+
+our $reset = "%Creset";
+
 # Default git-log format.
-our $GIT_FOLLOW_DEF_LOG_FMT = "%C(bold cyan)%h%Creset (%C(bold magenta)%t%Creset) - %s - %C(bold blue)%an%Creset <%C(bold yellow)%ae%Creset> [%C(bold green)%cr%Creset]";
+our $LOG_FMT = "%C($colors{'h'})%h$reset (%C($colors{'t'})%t$reset) - %s - %C($colors{'an'})%an$reset <%C($colors{'ae'})%ae$reset> [%C($colors{'cr'})%cr$reset]";
 
 # Current release version.
 our $GIT_FOLLOW_VERSION = "1.1.4";
@@ -45,7 +57,7 @@ if (&has_config('log', 'format')) {
 } elsif (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'}) {
 	$GIT_FOLLOW_LOG_FORMAT = $ENV{'GIT_FOLLOW_LOG_FORMAT'};
 } else {
-	$GIT_FOLLOW_LOG_FORMAT = $GIT_FOLLOW_DEF_LOG_FMT;
+	$GIT_FOLLOW_LOG_FORMAT = $LOG_FMT;
 }
 
 # Disable pager. Defaults to 0 (use pager).
@@ -155,18 +167,16 @@ sub set_refspec;
 sub show_total;
 sub show_version;
 
-# Get git config value.
+# Get git-config value.
 sub get_config {
 	my ($key, $qual) = @_;
 	my $config = undef;
 
 	system("git config follow.$key.$qual >/dev/null");
 
-	if (!$?) {
-		$config = `git config follow.$key.$qual`;
-	} else {
-		$config = `git config follow.$key$qual`;
-	}
+	$config = (!$?)
+	        ? `git config follow.$key.$qual`
+	        : `git config follow.$key$qual`;
 
 	# Strip trailing newline from config value.
 	chomp $config;
@@ -174,7 +184,7 @@ sub get_config {
 	return $config;
 }
 
-# Check if git config key exists.
+# Check if git-config key exists.
 sub has_config {
 	my ($key, $qual) = @_;
 
