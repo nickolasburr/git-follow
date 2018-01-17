@@ -42,12 +42,10 @@ if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
 # is running `git follow` purely for the usage information.
 @ARGV or die "$GitFollow::Core::USAGE_SYNOPSIS";
 
-# If `system` returns non-zero exit status, kill the script.
-if (system("git rev-parse --is-inside-work-tree &>/dev/null")) {
+# Validate we're inside a Git repository.
+if (!GitFollow::Core::is_repo()) {
 	# @todo: Build option to silence FYI output.
-	my $INVALID_REPO = sprintf("%s\n%s", sprintf($GitFollow::Core::INVALID_REPO_ERR, getcwd), $GitFollow::Core::INVALID_REPO_HINT);
-
-	die "$INVALID_REPO";
+	die sprintf("%s\n%s", sprintf($GitFollow::Core::INVALID_REPO_ERR, getcwd), $GitFollow::Core::INVALID_REPO_HINT);
 }
 
 # Name of pathspec given as an argument to git-follow.
