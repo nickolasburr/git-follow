@@ -103,7 +103,6 @@ END_USAGE_SYNOPSIS
 our @git_log_option_values;
 our %options;
 our $pathspec;
-our $refspec;
 
 # Options and their conflicting counterparts.
 our %copts = (
@@ -327,14 +326,13 @@ sub set_unary_opt {
 
 # Update package-level `$refspec` with ref given via --branch or --tag.
 sub set_refspec {
+	my ($opt, $ref, $refspec) = @_;
+
 	# If `$refspec` is already defined, notify the user and emit an error,
 	# as you can't give both `--branch` and `--tag` options simultaneously.
-	if (defined $refspec) {
+	if (defined $$refspec) {
 		die "$INVALID_REF_COMBO";
 	}
-
-	# Option name (branch, tag), and refspec (e.g. 'master', 'v1.0.5').
-	my ($opt, $ref) = @_;
 
 	my $refs = `git $opt --list`;
 	my $remotes = `git branch -r` if $opt eq "branch";
@@ -350,14 +348,14 @@ sub set_refspec {
 
 	# If `$ref` is indeed a valid refspec, update `$refspec`.
 	if (grep /^$ref$/, @refspecs) {
-		$refspec = $ref;
+		$$refspec = $ref;
 	} else {
 		# Otherwise, emit an error specific to
 		# the option given and exit the script.
 		if ($opt eq "branch") {
-			die "$INVALID_BRANCHREF";
+			die sprintf($INVALID_BRANCHREF, $ref);
 		} elsif ($opt eq "tag") {
-			die "$INVALID_TAGREF";
+			die sprintf($INVALID_TAGREF, $ref);
 		}
 	}
 }
