@@ -158,6 +158,7 @@ sub get_config;
 sub has_config;
 sub is_int;
 sub is_pathspec;
+sub is_repo;
 sub get_revr;
 sub get_format_ropt;
 sub rm_copts;
@@ -217,7 +218,14 @@ sub is_pathspec {
 	# Validate pathspec via git-cat-file.
 	system("git cat-file -e $refname:$target &>/dev/null");
 
-	return !($? >> 8);
+	!($? >> 8);
+}
+
+# Determine if we're inside a Git repository.
+sub is_repo {
+	system("git rev-parse --is-inside-work-tree &>/dev/null");
+
+	!($? >> 8);
 }
 
 # Get rev range for the given pathspec.
