@@ -21,10 +21,7 @@ cd git-follow
 make
 ```
 
-By default, the `git-follow` executable is installed to `/usr/local/bin` and the man page is installed to `/usr/local/share/man/man1`.
-You can install to an alternate location by passing the `PREFIX` option to `make`.
-
-Once installed, you can view the man page by either specifying the `--help` option (e.g. `git follow --help`) or by typing `man git-follow`.
+By default, files are installed to `/usr/local`. You can install to an alternate location by passing `PREFIX` to `make` (i.e. `make PREFIX=$HOME/.usr/local`).
 
 ## Environment
 
