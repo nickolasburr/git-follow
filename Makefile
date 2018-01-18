@@ -2,7 +2,7 @@
 ### Makefile
 ###
 
-PREFIX = /usr/local
+PREFIX ?= /usr/local
 TOOLS  = tools
 
 .PHONY: all install uninstall
