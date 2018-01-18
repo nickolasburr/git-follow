@@ -9,7 +9,7 @@
 use 5.008;
 use strict;
 use warnings;
-use lib "src";
+use lib "/usr/local/etc/git-follow/src";
 use Cwd qw(getcwd);
 use File::Basename;
 use Getopt::Long;
