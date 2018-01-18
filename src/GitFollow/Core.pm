@@ -42,24 +42,6 @@ our $GIT_FOLLOW_DIFF_MODE  = undef;
 our $GIT_FOLLOW_LOG_FORMAT = undef;
 our $GIT_FOLLOW_NO_PAGER   = undef;
 
-# Diff mode for patch views (defaults to inline).
-if (&has_config('diff', 'mode')) {
-	$GIT_FOLLOW_DIFF_MODE = &get_config('diff', 'mode');
-} elsif (defined $ENV{'GIT_FOLLOW_DIFF_MODE'}) {
-	$GIT_FOLLOW_DIFF_MODE = $ENV{'GIT_FOLLOW_DIFF_MODE'}
-}
-
-# Log format. Defaults to the following format:
-# --------------------------------------------------------------
-# commit (tree) - subject - author name <author email> [timestamp]
-if (&has_config('log', 'format')) {
-	$GIT_FOLLOW_LOG_FORMAT = &get_config('log', 'format');
-} elsif (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'}) {
-	$GIT_FOLLOW_LOG_FORMAT = $ENV{'GIT_FOLLOW_LOG_FORMAT'};
-} else {
-	$GIT_FOLLOW_LOG_FORMAT = $LOG_FMT;
-}
-
 # Disable pager. Defaults to 0 (use pager).
 if (&has_config('pager', 'disabled')) {
 	$GIT_FOLLOW_NO_PAGER = &get_config('pager', 'disabled');
@@ -100,34 +82,7 @@ our $USAGE_SYNOPSIS    = <<"END_USAGE_SYNOPSIS";
 
 END_USAGE_SYNOPSIS
 
-our @git_log_option_values;
-our %options;
-our $pathspec;
-
-# Options and their conflicting counterparts.
-our %copts = (
-	"no-merges"  => [
-		"m",
-	],
-		"no-patch"   => [
-		"patch",
-	],
-		"no-renames" => [
-		"follow",
-	],
-	"reverse"    => [
-		"graph",
-		"follow",
-	],
-);
-
-# Default argument values for options that accept arguments.
-our %dargs = (
-	"last"  => 1,
-	"lines" => 1,
-);
-
-# Diff modes and their git-log option counterparts.
+# Diff modes and their git-log(1) option counterparts.
 our %diffopts = (
 	"inline"   => "none",
 	"sxs"      => "plain",
@@ -139,14 +94,6 @@ our %diffopts = (
 our @git_log = (
 	"git",
 	"log",
-);
-
-our %git_log_options = (
-	"m"      => "-m",
-	"follow" => "--follow",
-	"format" => "--format=$GIT_FOLLOW_LOG_FORMAT",
-	"graph"  => "--graph",
-	"patch"  => "--patch-with-stat",
 );
 
 ###
@@ -249,7 +196,7 @@ sub get_revr {
 
 # Format the `git log` option with argument(s) given.
 sub get_format_ropt {
-	my ($opt, @args) = @_;
+	my ($opt, @args, $pathspec) = @_;
 
 	if ($opt eq "first") {
 		return "--diff-filter=A";
@@ -295,33 +242,31 @@ sub get_format_ropt {
 # Remove conflicting `git log` options so they're
 # not passed to `system`, causing conflict errors.
 sub rm_copts {
-	my ($opt) = @_;
-	my $cnopts = $copts{$opt};
+	my ($opt, $copts, $git_log_options) = @_;
+	my $cnopts = $$copts{$opt};
 
 	foreach (values @$cnopts) {
 		my $cnopt = shift @$cnopts;
-		delete $git_log_options{$cnopt} if exists $git_log_options{$cnopt};
+		delete $$git_log_options{$cnopt} if exists $$git_log_options{$cnopt};
 	}
 }
 
 # Set argument for `$opt`, whether given to the option or default.
 sub set_args {
-	my ($opt, $arg) = @_;
+	my ($opt, $arg, $options, $dargs) = @_;
 
 	# Update %options hash with either the given option
 	# argument or with the default option argument.
-	$options{$opt} = !$arg ? $dargs{$opt} : $arg;
+	$$options{$opt} = !$arg ? $$dargs{$opt} : $arg;
 }
 
 # Add unary option to `%git_log_options`.
 sub set_unary_opt {
-	my $nopt = shift;
-	# Get formatted `git log` option.
-	my $ropt = &get_format_ropt($nopt);
+	my ($nopt, $copts, $git_log_options) = @_;
 
-	# Remove conflicting options, add aux option to `%git_log_options`.
-	&rm_copts($nopt);
-	$git_log_options{$nopt} = $ropt;
+	# Add aux option to %git_log_options, remove conflicting options.
+	$$git_log_options{$nopt} = &get_format_ropt($nopt);
+	&rm_copts($nopt, \$copts, \$git_log_options);
 }
 
 # Update package-level `$refspec` with ref given via --branch or --tag.
@@ -362,6 +307,8 @@ sub set_refspec {
 
 # Show total number of commits for pathspec.
 sub show_total {
+	my $pathspec = shift;
+
 	# Whether to use rename detection or stop at renames.
 	my $fopt = (grep { $_ eq "--no-renames" || $_ eq "-O" } @ARGV)
 	         ? "--no-renames"
