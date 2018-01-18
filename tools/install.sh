@@ -13,6 +13,7 @@ fi
 TARGET="git-follow"
 MANDIR="man"
 SRCDIR="src"
+DEFDIR="/usr/local"
 
 BINDIR="$PREFIX/bin"
 ETCDIR="$PREFIX/etc"
@@ -30,7 +31,7 @@ CPOPTS="-rf"
 
 SED="/usr/bin/sed"
 SEDOPTS="-i ''"
-SEDMATCH="s@$SRCDIR@$MDLSRC@g"
+SEDMATCH="s@$DEFDIR@$PREFIX@g"
 
 cd ..
 cp "$MANDIR/$MANPAGE" "$MANDEST/$MANPAGE"
