@@ -17,70 +17,121 @@ use GitFollow::Core;
 
 my $diffopts = \%GitFollow::Core::diffopts;
 my $git_log  = \@GitFollow::Core::git_log;
-my $options  = \%GitFollow::Core::options;
-my $pathspec = \$GitFollow::Core::pathspec;
-my $refspec = undef;
 
-my $git_log_options = \%GitFollow::Core::git_log_options;
-my $git_log_option_values = \@GitFollow::Core::git_log_option_values;
+my %options;
+my $pathspec = undef;
+my $refspec  = undef;
+
+my %git_log_options = (
+	"diff"   => "--word-diff=%s",
+	"m"      => "-m",
+	"follow" => "--follow",
+	"format" => "--format=%s",
+	"graph"  => "--graph",
+	"patch"  => "--patch-with-stat",
+);
+
+my @git_log_option_values;
+
+# Diff mode for patch views (defaults to inline).
+# @todo: Finish reworking this.
+if (&GitFollow::Core::has_config('diff', 'mode') || defined $ENV{'GIT_FOLLOW_DIFF_MODE'}) {
+	$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, "color");
+}
+
+# Log format for git-log(1).
+if (&GitFollow::Core::has_config('log', 'format')) {
+	$git_log_options{"format"} = sprintf($git_log_options{"format"}, &GitFollow::Core::get_config('log', 'format'));
+} elsif (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'}) {
+	$git_log_options{"format"} = sprintf($git_log_options{"format"}, $ENV{'GIT_FOLLOW_LOG_FORMAT'});
+} else {
+	$git_log_options{"format"} = sprintf($git_log_options{"format"}, $GitFollow::Core::LOG_FMT);
+}
+
+# Options and their conflicting counterparts.
+my %copts = (
+	"no-merges"  => [
+		"m",
+	],
+	"no-patch"   => [
+		"patch",
+	],
+	"no-renames" => [
+		"follow",
+	],
+	"reverse"    => [
+		"graph",
+		"follow",
+	],
+);
+
+# Default argument values for options that accept arguments.
+my %dargs = (
+	"last"  => 1,
+	"lines" => 1,
+);
 
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	GitFollow::Core::show_version();
+	&GitFollow::Core::show_version();
 }
 
-# If --total (or -T) was given as an option, print
-# total number of revisions for pathspec and exit.
-if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
-	GitFollow::Core::show_total();
-}
-
-# If no arguments were given (e.g. `git follow`, no pathspec),
-# emit an error message with usage details and kill the script.
-# We'll place this before the repository check, in case a user
-# is running `git follow` purely for the usage information.
 @ARGV or die "$GitFollow::Core::USAGE_SYNOPSIS";
 
 # Validate we're inside a Git repository.
-if (!GitFollow::Core::is_repo()) {
+if (!&GitFollow::Core::is_repo()) {
 	# @todo: Build option to silence FYI output.
 	die sprintf("%s\n%s", sprintf($GitFollow::Core::INVALID_REPO_ERR, getcwd), $GitFollow::Core::INVALID_REPO_HINT);
 }
 
-# Name of pathspec given as an argument to git-follow.
-$$pathspec = ($ARGV[$#ARGV] eq ".")
-           ? File::Basename::basename(getcwd)
-           : $ARGV[$#ARGV];
+$pathspec = ($ARGV[$#ARGV] eq ".")
+          ? &File::Basename::basename(getcwd)
+          : $ARGV[$#ARGV];
+
+# If --total (or -T) was given as an option, print
+# total number of revisions for pathspec and exit.
+if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
+	&GitFollow::Core::show_total($pathspec);
+}
 
 # Dispatch of GitFollow::Core subroutine wrappers.
 my %dispatch = (
-	"set_refspec" => sub {
-		GitFollow::Core::set_refspec((@_, \$refspec));
+	"set_args"      => sub {
+		&GitFollow::Core::set_args((@_, \%options, \%dargs));
+	},
+	"set_refspec"   => sub {
+		&GitFollow::Core::set_refspec((@_, \$refspec));
+	},
+	"set_unary_opt" => sub {
+		&GitFollow::Core::set_unary_opt((@_, \%copts, \%git_log_options));
+	},
+	"show_total"    => sub {
+		&GitFollow::Core::show_total($pathspec);
 	},
 );
 
-Getopt::Long::Configure(
+&Getopt::Long::Configure(
 	"no_auto_abbrev",
 	"no_ignore_case",
 	"require_order",
 );
 
-Getopt::Long::GetOptions(
-	$options,
+&Getopt::Long::GetOptions(
+	\%options,
 	'branch|b=s{1,1}'   => $dispatch{"set_refspec"},
 	'first|f',
 	'func|F=s{1,1}',
-	'last|l=i{0,1}'     => \&GitFollow::Core::set_args,
+	'last|l=i{0,1}'     => $dispatch{"set_args"},
 	'lines|L=i@{1,2}',
-	'no-merges|M'       => \&GitFollow::Core::set_unary_opt,
-	'no-patch|N'        => \&GitFollow::Core::set_unary_opt,
-	'no-renames|O'      => \&GitFollow::Core::set_unary_opt,
+	'no-merges|M'       => $dispatch{"set_unary_opt"},
+	'no-patch|N'        => $dispatch{"set_unary_opt"},
+	'no-renames|O'      => $dispatch{"set_unary_opt"},
 	'pickaxe|P=s{1,1}',
 	'range|r=s@{1,2}',
-	'reverse|R'         => \&GitFollow::Core::set_unary_opt,
+	'reverse|R'         => $dispatch{"set_unary_opt"},
 	'tag|t=s{1,1}'      => $dispatch{"set_refspec"},
-	'total|T',
+	'total|T'           => $dispatch{"show_total"},
 	'version|V',
 ) or die "$GitFollow::Core::USAGE_SYNOPSIS";
 
@@ -96,27 +147,22 @@ if (defined $GitFollow::Core::GIT_FOLLOW_NO_PAGER && $GitFollow::Core::GIT_FOLLO
 }
 
 # Iterate through options and option arguments (if applicable).
-while (my ($opt, $args) = each $options) {
-	push @ropts, GitFollow::Core::get_format_ropt($opt, $args);
+while (my ($opt, $args) = each %options) {
+	push @ropts, &GitFollow::Core::get_format_ropt($opt, $args, $pathspec);
 }
 
 # Update @git_log_option_values with corresponding git-log options.
-@$git_log_option_values = values $git_log_options;
-
-# Change the diff style, if applicable.
-if (defined $GitFollow::Core::GIT_FOLLOW_DIFF_MODE) {
-	unshift @$git_log_option_values, "--word-diff=$diffopts->{$GitFollow::Core::GIT_FOLLOW_DIFF_MODE}";
-}
+@git_log_option_values = values %git_log_options;
 
 # Set default refspec if not given explicitly via --branch, --tag.
 $refspec = "HEAD" if not defined $refspec;
 
 # If pathspec was not a valid file object, emit an error and kill the script.
-if (!GitFollow::Core::is_pathspec($refspec, $$pathspec)) {
-	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $$pathspec);
+if (!&GitFollow::Core::is_pathspec($refspec, $pathspec)) {
+	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
 }
 
-system @$git_log, @ropts, @$git_log_option_values, $refspec, "--", $$pathspec;
+system @$git_log, @ropts, @git_log_option_values, $refspec, "--", $pathspec;
 
 1;
 
