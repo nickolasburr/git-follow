@@ -25,11 +25,11 @@ By default, files are installed to `/usr/local`. You can install to an alternate
 
 ## Environment
 
-You can set environment variables to customize the output of `git-follow`. The following are currently available:
+You can set configuration values in .gitconfig to customize the output of `git-follow`. The following configuration values are honored:
 
-+ `GIT_FOLLOW_DIFF_MODE`: Diff mode. Defaults to inline. See [`--word-diff`](https://git-scm.com/docs/git-log#git-log---word-diffltmodegt), [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt), et al. of git-log(1) for syntax.
-+ `GIT_FOLLOW_LOG_FORMAT`: Log format. See [`--format`](https://git-scm.com/docs/git-log#git-log---formatltformatgt) of git-log(1) for syntax.
-+ `GIT_FOLLOW_NO_PAGER`: No pager mode. Defaults to 0. Set to 1 to prevent Git from using a pager. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1).
++ `follow.diff.mode`: Diff mode. Defaults to inline. See [`--word-diff`](https://git-scm.com/docs/git-log#git-log---word-diffltmodegt), [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt), et al. of git-log(1) for syntax.
++ `follow.log.format`: Log format. See [`--format`](https://git-scm.com/docs/git-log#git-log---formatltformatgt) of git-log(1) for syntax.
++ `follow.pager.disabled`: No pager mode. Defaults to false. Set to true to prevent Git from using a pager. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1).
 
 ## Options
 
@@ -43,6 +43,7 @@ Options can be specified to provide more refined information. If no options are 
 + `--no-merges`, `-M`: Show commits which have a maximum of one parent. See [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges) of git-log(1).
 + `--no-patch`, `-N`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1).
 + `--no-renames`, `-O`: Disable rename detection. See [`--no-renames`](https://git-scm.com/docs/git-log#git-log---no-renames) of git-log(1).
++ `--pager`, `-p`: Force pager when invoking git-log(1). Overrides follow.pager.disabled config value.
 + `--pickaxe`, `-P` `<string>`: Show commits which change the number of occurrences of `<string>` in pathspec. See [`-S`](https://git-scm.com/docs/git-log#git-log--Sltstringgt) of git-log(1).
 + `--range`, `-r` `<startref>` `[<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See gitrevisions(1).
 + `--reverse`, `-R`: Show commits in reverse chronological order. See [`--walk-reflogs`](https://git-scm.com/docs/git-log#git-log---walk-reflogs) of git-log(1).
