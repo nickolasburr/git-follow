@@ -18,18 +18,16 @@ our @EXPORT_OK = qw(
 	set_unary_opt
 );
 
-our %colors = (
-	"h"  => "bold cyan",
-	"t"  => "bold magenta",
-	"an" => "bold blue",
-	"ae" => "bold yellow",
-	"cr" => "bold green",
+our %parts = (
+	"hash"  => "%C(bold cyan)%h%Creset",
+	"tree"  => "%C(bold magenta)%t%Creset",
+	"name"  => "%C(bold blue)%an%Creset",
+	"email" => "%C(bold yellow)%ae%Creset",
+	"time"  => "%C(bold green)%cr%Creset",
 );
 
-our $reset = "%Creset";
-
 # Default git-log format.
-our $LOG_FMT = "%C($colors{'h'})%h$reset (%C($colors{'t'})%t$reset) - %s - %C($colors{'an'})%an$reset <%C($colors{'ae'})%ae$reset> [%C($colors{'cr'})%cr$reset]";
+our $LOG_FMT = "$parts{'hash'} ($parts{'tree'}) - %s - $parts{'name'} <$parts{'email'}> [$parts{'time'}]";
 
 # Current release version.
 our $GIT_FOLLOW_VERSION = "1.1.4";
@@ -41,13 +39,6 @@ our $GIT_FOLLOW_VERSION = "1.1.4";
 our $GIT_FOLLOW_DIFF_MODE  = undef;
 our $GIT_FOLLOW_LOG_FORMAT = undef;
 our $GIT_FOLLOW_NO_PAGER   = undef;
-
-# Disable pager. Defaults to 0 (use pager).
-if (&has_config('pager', 'disabled')) {
-	$GIT_FOLLOW_NO_PAGER = &get_config('pager', 'disabled');
-} elsif (defined $ENV{'GIT_FOLLOW_NO_PAGER'}) {
-	$GIT_FOLLOW_NO_PAGER = $ENV{'GIT_FOLLOW_NO_PAGER'};
-}
 
 ###
 ### User errors, notices, hints, etc.
@@ -81,20 +72,6 @@ our $USAGE_SYNOPSIS    = <<"END_USAGE_SYNOPSIS";
     --version,    -V                         Show current release version.
 
 END_USAGE_SYNOPSIS
-
-# Diff modes and their git-log(1) option counterparts.
-our %diffopts = (
-	"inline"   => "none",
-	"sxs"      => "plain",
-	"colorsxs" => "color",
-);
-
-# Base components of `git log` shell command, represented
-# as an array to make it easier to pass to `system` builtin.
-our @git_log = (
-	"git",
-	"log",
-);
 
 ###
 ### git-follow(1) subroutines.
