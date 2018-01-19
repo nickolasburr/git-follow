@@ -15,8 +15,26 @@ use File::Basename;
 use Getopt::Long;
 use GitFollow::Core;
 
-my $diffopts = \%GitFollow::Core::diffopts;
-my $git_log  = \@GitFollow::Core::git_log;
+# If --version (or -V) was given as an option,
+# print the current release version and exit.
+if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
+	&GitFollow::Core::show_version();
+}
+
+# Diff modes and their git-log(1) option counterparts.
+my %diffopts = (
+	"inline"   => "none",
+	"sxs"      => "plain",
+	"colorsxs" => "color",
+);
+
+# Base components of `git log` shell command, represented
+# as an array to make it easier to pass to `system` builtin.
+my @git_log = (
+	"git",
+	"--paginate",
+	"log",
+);
 
 my %options;
 my $pathspec = undef;
@@ -31,10 +49,19 @@ my %git_log_options = (
 	"patch"  => "--patch-with-stat",
 );
 
-my @git_log_option_values;
+# Disable pager. Defaults to false (use pager).
+if (&GitFollow::Core::has_config('pager', 'disabled')) {
+	# $git_log[1] = "--no-pager";
+} elsif (defined $ENV{'GIT_FOLLOW_NO_PAGER'}) {
+	# $git_log[1] = "--no-pager";
+}
 
 # Diff mode for patch views (defaults to inline).
 # @todo: Finish reworking this.
+if (&GitFollow::Core::has_config('diff', 'mode')) {
+	#
+}
+
 if (&GitFollow::Core::has_config('diff', 'mode') || defined $ENV{'GIT_FOLLOW_DIFF_MODE'}) {
 	$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, "color");
 }
@@ -47,6 +74,8 @@ if (&GitFollow::Core::has_config('log', 'format')) {
 } else {
 	$git_log_options{"format"} = sprintf($git_log_options{"format"}, $GitFollow::Core::LOG_FMT);
 }
+
+my @git_log_option_values;
 
 # Options and their conflicting counterparts.
 my %copts = (
@@ -70,12 +99,6 @@ my %dargs = (
 	"last"  => 1,
 	"lines" => 1,
 );
-
-# If --version (or -V) was given as an option,
-# print the current release version and exit.
-if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	&GitFollow::Core::show_version();
-}
 
 @ARGV or die "$GitFollow::Core::USAGE_SYNOPSIS";
 
@@ -139,13 +162,6 @@ my %dispatch = (
 # command and pass to `system` builtin.
 my @ropts = ();
 
-# If GIT_FOLLOW_NO_PAGER is defined, pass --no-pager option to git.
-if (defined $GitFollow::Core::GIT_FOLLOW_NO_PAGER && $GitFollow::Core::GIT_FOLLOW_NO_PAGER eq "true") {
-	my $git = shift @$git_log;
-
-	unshift @$git_log, ($git, "--no-pager");
-}
-
 # Iterate through options and option arguments (if applicable).
 while (my ($opt, $args) = each %options) {
 	push @ropts, &GitFollow::Core::get_format_ropt($opt, $args, $pathspec);
@@ -162,7 +178,7 @@ if (!&GitFollow::Core::is_pathspec($refspec, $pathspec)) {
 	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
 }
 
-system @$git_log, @ropts, @git_log_option_values, $refspec, "--", $pathspec;
+system @git_log, @ropts, @git_log_option_values, $refspec, "--", $pathspec;
 
 1;
 
