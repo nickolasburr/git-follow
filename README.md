@@ -26,11 +26,11 @@ For example, `make PREFIX=$HOME/.usr/local`.
 
 ## Environment
 
-Configuration values set via git-config(1) can be used to customize the behavior of git-follow. The following configurations are honored:
+Configuration values set via git-config(1) can be used to customize the behavior of git-follow.
 
 + `follow.diff.mode`: Diff mode. Choices include `inline` (default), `sxs`, and `colorsxs`. See [`--word-diff`](https://git-scm.com/docs/git-log#git-log---word-diffltmodegt), [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt), et al. of git-log(1).
 + `follow.log.format`: Log format. See [`--format`](https://git-scm.com/docs/git-log#git-log---formatltformatgt) of git-log(1) for syntax.
-+ `follow.pager.disable`: Disable pager. Defaults to false. Set to true to disable pager. Has equivalent effect of 'git --no-pager follow ...'. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1).
++ `follow.pager.disable`: Disable pager. Defaults to false. Set to true to disable pager. Has equivalent effect of `git --no-pager follow ...`. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1).
 
 ## Options
 
