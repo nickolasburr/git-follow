@@ -49,15 +49,13 @@ my %git_log_options = (
 	"patch"  => "--patch-with-stat",
 );
 
-# Disable pager. Defaults to false (use pager).
-if (&GitFollow::Core::has_config("pager", "disabled") &&
-    &GitFollow::Core::get_config("pager", "disabled") eq "true") {
+if (&GitFollow::Core::has_config("pager", "disable") &&
+    &GitFollow::Core::get_config("pager", "disable") eq "true") {
 
 	# Replace --paginate with --no-pager.
 	$git_log[1] = "--no-pager";
 }
 
-# Diff mode (defaults to inline).
 if (&GitFollow::Core::has_config("diff", "mode")) {
 	my $diffmode = &GitFollow::Core::get_config("diff", "mode");
 
@@ -68,7 +66,6 @@ if (&GitFollow::Core::has_config("diff", "mode")) {
 	}
 }
 
-# Format to use for --format option of git-log(1).
 if (&GitFollow::Core::has_config("log", "format")) {
 	$git_log_options{"format"} = sprintf($git_log_options{"format"}, &GitFollow::Core::get_config("log", "format"));
 } else {
@@ -152,7 +149,7 @@ my %dispatch = (
 	'no-merges|M'       => $dispatch{"set_unary_opt"},
 	'no-patch|N'        => $dispatch{"set_unary_opt"},
 	'no-renames|O'      => $dispatch{"set_unary_opt"},
-	'pager'             => $dispatch{"set_pager"},
+	'pager|p'           => $dispatch{"set_pager"},
 	'pickaxe|P=s{1,1}',
 	'range|r=s@{1,2}',
 	'reverse|R'         => $dispatch{"set_unary_opt"},
@@ -205,13 +202,15 @@ __END__
 
 =head1 ENVIRONMENT
 
+	Configuration values set via git-config(1) can be used to customize the behavior of git-follow. The following configurations are honored:
+
 	follow.diff.mode
 		Diff mode. Defaults to inline. See --word-diff, --color-words, et al. of git-log(1) for syntax.
 
 	follow.log.format
 		Log format. See --format of git-log(1) for syntax.
 
-	follow.pager.disabled
+	follow.pager.disable
 		Disable pager. Defaults to false. Set to true to disable pager. Has equivalent effect of 'git --no-pager follow ...'. See --no-pager of git(1).
 
 =head1 OPTIONS
@@ -241,7 +240,7 @@ __END__
 		Disable rename detection. See --no-renames of git-log(1).
 
 	--pager, -p
-		Force pager when invoking git-log(1). Overrides follow.pager.disabled config value.
+		Force pager when invoking git-log(1). Overrides follow.pager.disable config value.
 
 	--pickaxe, -P <string>
 		Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).

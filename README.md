@@ -8,7 +8,7 @@ You can install `git-follow` via Homebrew or manually.
 
 ### Homebrew
 
-```shell
+```
 brew tap nickolasburr/pfa
 brew install git-follow
 ```
@@ -21,15 +21,16 @@ cd git-follow
 make
 ```
 
-By default, files are installed to `/usr/local`. You can install to an alternate location by passing `PREFIX` to `make` (i.e. `make PREFIX=$HOME/.usr/local`).
+By default, files are installed to `/usr/local`. You can install to an alternate location by passing `PREFIX` to `make`.
+For example, `make PREFIX=$HOME/.usr/local`.
 
 ## Environment
 
-You can set configuration values in .gitconfig to customize the output of `git-follow`. The following configuration values are honored:
+Configuration values set via git-config(1) can be used to customize the behavior of git-follow. The following configurations are honored:
 
-+ `follow.diff.mode`: Diff mode. Defaults to inline. See [`--word-diff`](https://git-scm.com/docs/git-log#git-log---word-diffltmodegt), [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt), et al. of git-log(1) for syntax.
++ `follow.diff.mode`: Diff mode. Choices include `inline` (default), `sxs`, and `colorsxs`. See [`--word-diff`](https://git-scm.com/docs/git-log#git-log---word-diffltmodegt), [`--color-words`](https://git-scm.com/docs/git-log#git-log---color-wordsltregexgt), et al. of git-log(1).
 + `follow.log.format`: Log format. See [`--format`](https://git-scm.com/docs/git-log#git-log---formatltformatgt) of git-log(1) for syntax.
-+ `follow.pager.disabled`: No pager mode. Defaults to false. Set to true to prevent Git from using a pager. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1).
++ `follow.pager.disable`: Disable pager. Defaults to false. Set to true to disable pager. Has equivalent effect of 'git --no-pager follow ...'. See [`--no-pager`](https://git-scm.com/docs/git#git---no-pager) of git(1).
 
 ## Options
 
@@ -59,43 +60,43 @@ Like standard Git builtins, git-follow supports an optional pathspec delimiter [
 
 **Display commits on branch `topic` which affected `blame.c`**
 
-```shell
+```
 git follow --branch topic -- blame.c
 ```
 
 **Display first commit where Git initiated tracking of `branch.c`**
 
-```shell
+```
 git follow --first -- branch.c
 ```
 
 **Display last 5 commits which affected `column.c`** (See [`--diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) of git-log(1)).
 
-```shell
+```
 git follow --last 5 -- column.c
 ```
 
 **Display last commit where lines 5 through `EOF` were affected in `diff.c`**
 
-```shell
+```
 git follow --last --lines 5 -- diff.c
 ```
 
 **Display last 3 commits where lines 10 through 15 were affected in `bisect.c`**
 
-```shell
+```
 git follow --last 3 --lines 10 15 -- bisect.c
 ```
 
 **Display commits where function `funcname` was affected in `archive.c`**
 
-```shell
+```
 git follow --func funcname -- archive.c
 ```
 
 **Display commits in range `fifth ancestor of master` (`master@{5}`) to `HEAD` which affected `worktree.c`**
 
-```shell
+```
 git follow --range master@{5} -- worktree.c
 ```
 
@@ -103,25 +104,25 @@ git follow --range master@{5} -- worktree.c
 
 Same as above (assuming currently checked out branch is `master`).
 
-```shell
+```
 git follow --range 5 -- worktree.c
 ```
 
 **Display commits in range `2 days ago` and `1 hour ago` which affected `apply.c`**<sup>[1](#relative-format)</sup>
 
-```shell
+```
 git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
 ```
 
 **Display commits up to tag `v1.5.3` which affected `graph.c`**
 
-```shell
+```
 git follow --tag v1.5.3 -- graph.c
 ```
 
 **Display total number of commits which affected `rebase.c`**
 
-```shell
+```
 git follow --total -- rebase.c
 ```
 
