@@ -50,27 +50,27 @@ my %git_log_options = (
 );
 
 # Disable pager. Defaults to false (use pager).
-if (&GitFollow::Core::has_config('pager', 'disabled')) {
-	# $git_log[1] = "--no-pager";
-} elsif (defined $ENV{'GIT_FOLLOW_NO_PAGER'}) {
-	# $git_log[1] = "--no-pager";
+if (&GitFollow::Core::has_config("pager", "disabled") &&
+    &GitFollow::Core::get_config("pager", "disabled") eq "true") {
+
+	# Replace --paginate with --no-pager.
+	$git_log[1] = "--no-pager";
 }
 
-# Diff mode for patch views (defaults to inline).
-# @todo: Finish reworking this.
-if (&GitFollow::Core::has_config('diff', 'mode')) {
-	#
+# Diff mode (defaults to inline).
+if (&GitFollow::Core::has_config("diff", "mode")) {
+	my $diffmode = &GitFollow::Core::get_config("diff", "mode");
+
+	if (grep { $_ eq $diffmode } keys %diffopts) {
+		$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, $diffopts{$diffmode});
+	} else {
+		die sprintf("Invalid value '%s' specified for follow.diff.mode\n", $diffmode);
+	}
 }
 
-if (&GitFollow::Core::has_config('diff', 'mode') || defined $ENV{'GIT_FOLLOW_DIFF_MODE'}) {
-	$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, "color");
-}
-
-# Log format for git-log(1).
-if (&GitFollow::Core::has_config('log', 'format')) {
-	$git_log_options{"format"} = sprintf($git_log_options{"format"}, &GitFollow::Core::get_config('log', 'format'));
-} elsif (defined $ENV{'GIT_FOLLOW_LOG_FORMAT'}) {
-	$git_log_options{"format"} = sprintf($git_log_options{"format"}, $ENV{'GIT_FOLLOW_LOG_FORMAT'});
+# Format to use for --format option of git-log(1).
+if (&GitFollow::Core::has_config("log", "format")) {
+	$git_log_options{"format"} = sprintf($git_log_options{"format"}, &GitFollow::Core::get_config("log", "format"));
 } else {
 	$git_log_options{"format"} = sprintf($git_log_options{"format"}, $GitFollow::Core::LOG_FMT);
 }
@@ -118,19 +118,21 @@ if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
 	&GitFollow::Core::show_total($pathspec);
 }
 
-# Dispatch of GitFollow::Core subroutine wrappers.
 my %dispatch = (
 	"set_args"      => sub {
 		&GitFollow::Core::set_args((@_, \%options, \%dargs));
 	},
+	"set_pager"     => sub {
+		$git_log[1] = "--paginate";
+	},
 	"set_refspec"   => sub {
 		&GitFollow::Core::set_refspec((@_, \$refspec));
 	},
-	"set_unary_opt" => sub {
-		&GitFollow::Core::set_unary_opt((@_, \%copts, \%git_log_options));
-	},
 	"show_total"    => sub {
 		&GitFollow::Core::show_total($pathspec);
+	},
+	"set_unary_opt" => sub {
+		&GitFollow::Core::set_unary_opt((@_, \%copts, \%git_log_options));
 	},
 );
 
@@ -150,6 +152,7 @@ my %dispatch = (
 	'no-merges|M'       => $dispatch{"set_unary_opt"},
 	'no-patch|N'        => $dispatch{"set_unary_opt"},
 	'no-renames|O'      => $dispatch{"set_unary_opt"},
+	'pager'             => $dispatch{"set_pager"},
 	'pickaxe|P=s{1,1}',
 	'range|r=s@{1,2}',
 	'reverse|R'         => $dispatch{"set_unary_opt"},
@@ -202,14 +205,14 @@ __END__
 
 =head1 ENVIRONMENT
 
-	GIT_FOLLOW_DIFF_MODE
+	follow.diff.mode
 		Diff mode. Defaults to inline. See --word-diff, --color-words, et al. of git-log(1) for syntax.
 
-	GIT_FOLLOW_LOG_FORMAT
+	follow.log.format
 		Log format. See --format of git-log(1) for syntax.
 
-	GIT_FOLLOW_NO_PAGER
-		Disable pager. Defaults to 0. Set to 1 to disable pager. Has equivalent effect of 'git --no-pager follow ...'. See --no-pager of git(1).
+	follow.pager.disabled
+		Disable pager. Defaults to false. Set to true to disable pager. Has equivalent effect of 'git --no-pager follow ...'. See --no-pager of git(1).
 
 =head1 OPTIONS
 
@@ -236,6 +239,9 @@ __END__
 
 	--no-renames, -O
 		Disable rename detection. See --no-renames of git-log(1).
+
+	--pager, -p
+		Force pager when invoking git-log(1). Overrides follow.pager.disabled config value.
 
 	--pickaxe, -P <string>
 		Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).
