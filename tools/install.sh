@@ -29,6 +29,9 @@ OPTIONS="-c"
 CP="/bin/cp"
 CPOPTS="-rf"
 
+RM="/bin/rm"
+RMOPTS="-rf"
+
 SED="/usr/bin/sed"
 SEDOPTS="-i ''"
 SEDMATCH="s@$DEFDIR@$PREFIX@g"
@@ -40,8 +43,10 @@ cp "$MANDIR/$MANPAGE" "$MANDEST/$MANPAGE"
 eval "$SED $SEDOPTS $SEDMATCH $TARGET"
 eval "$INSTALL $OPTIONS $TARGET $BINDIR/$TARGET"
 
-if [[ ! -d "$MDLDIR" ]]; then
-	mkdir -p "$MDLDIR"
+if [[ -d "$MDLDIR" ]]; then
+	eval "$RM $RMOPTS $MDLDIR"
 fi
+
+mkdir -p "$MDLDIR"
 
 eval "$CP $CPOPTS $SRCDIR $MDLSRC"
