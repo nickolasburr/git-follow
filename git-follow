@@ -108,6 +108,8 @@ $pathspec = ($ARGV[$#ARGV] eq ".")
           ? &File::Basename::basename(getcwd)
           : $ARGV[$#ARGV];
 
+# @todo: Move this below Configure and GetOptions.
+# ------------------------------------------------
 # If --total (or -T) was given as an option, print
 # total number of revisions for pathspec and exit.
 if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
@@ -128,7 +130,13 @@ my %dispatch = (
 		&GitFollow::Core::show_total($pathspec);
 	},
 	"set_unary_opt" => sub {
-		&GitFollow::Core::set_unary_opt((@_, \%copts, \%git_log_options));
+		my $unary_opt = shift;
+
+		# Get formatted git-log(1) option from the unary option given.
+		$git_log_options{$unary_opt} = &GitFollow::Core::get_format_ropt($unary_opt);
+
+		# Remove any conflicting options from %git_log_options.
+		&GitFollow::Core::rm_copts($unary_opt, \%copts, \%git_log_options);
 	},
 );
 

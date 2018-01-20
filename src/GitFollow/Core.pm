@@ -152,7 +152,7 @@ sub is_repo {
 	!($? >> 8);
 }
 
-# Get rev range for the given pathspec.
+# Get revision range via start and end boundaries.
 sub get_revr {
 	my $revr_start = shift;
 	my $revr_end   = shift;
@@ -217,15 +217,14 @@ sub get_format_ropt {
 	}
 }
 
-# Remove conflicting `git log` options so they're
+# Remove conflicting git-log(1) options so they're
 # not passed to `system`, causing conflict errors.
 sub rm_copts {
 	my ($opt, $copts, $git_log_options) = @_;
-	my $cnopts = $$copts{$opt};
+	my $cnopts = $copts->{$opt};
 
-	foreach (values @$cnopts) {
-		my $cnopt = shift @$cnopts;
-		delete $$git_log_options{$cnopt} if exists $$git_log_options{$cnopt};
+	foreach my $cnopt (values @$cnopts) {
+		delete $git_log_options->{$cnopt} if exists $git_log_options->{$cnopt};
 	}
 }
 
@@ -236,15 +235,6 @@ sub set_args {
 	# Update %options hash with either the given option
 	# argument or with the default option argument.
 	$$options{$opt} = !$arg ? $$dargs{$opt} : $arg;
-}
-
-# Add unary option to `%git_log_options`.
-sub set_unary_opt {
-	my ($nopt, $copts, $git_log_options) = @_;
-
-	# Add aux option to %git_log_options, remove conflicting options.
-	$$git_log_options{$nopt} = &get_format_ropt($nopt);
-	&rm_copts($nopt, \$copts, \$git_log_options);
 }
 
 # Update package-level `$refspec` with ref given via --branch or --tag.
