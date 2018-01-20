@@ -66,11 +66,10 @@ if (&GitFollow::Core::has_config("diff", "mode")) {
 	}
 }
 
-if (&GitFollow::Core::has_config("log", "format")) {
-	$git_log_options{"format"} = sprintf($git_log_options{"format"}, &GitFollow::Core::get_config("log", "format"));
-} else {
-	$git_log_options{"format"} = sprintf($git_log_options{"format"}, $GitFollow::Core::LOG_FMT);
-}
+# Value to pass to --format option of git-log(1).
+$git_log_options{"format"} = &GitFollow::Core::has_config("log", "format")
+                           ? sprintf($git_log_options{"format"}, &GitFollow::Core::get_config("log", "format"))
+                           : sprintf($git_log_options{"format"}, &GitFollow::Core::LOG_FMT);
 
 my @git_log_option_values;
 
