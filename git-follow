@@ -71,8 +71,6 @@ $git_log_options{"format"} = &GitFollow::Core::has_config("log", "format")
                            ? sprintf($git_log_options{"format"}, &GitFollow::Core::get_config("log", "format"))
                            : sprintf($git_log_options{"format"}, &GitFollow::Core::LOG_FMT);
 
-my @git_log_option_values;
-
 # Options and their conflicting counterparts.
 my %copts = (
 	"no-merges"  => [
@@ -174,9 +172,6 @@ while (my ($opt, $args) = each %options) {
 	push @ropts, &GitFollow::Core::get_format_ropt($opt, $args, $pathspec);
 }
 
-# Update @git_log_option_values with corresponding git-log options.
-@git_log_option_values = values %git_log_options;
-
 # Set default refspec if not given explicitly via --branch, --tag.
 $refspec = "HEAD" if not defined $refspec;
 
@@ -185,7 +180,7 @@ if (!&GitFollow::Core::is_pathspec($refspec, $pathspec)) {
 	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
 }
 
-system @git_log, @ropts, @git_log_option_values, $refspec, "--", $pathspec;
+system @git_log, @ropts, (values %git_log_options), $refspec, "--", $pathspec;
 
 1;
 
