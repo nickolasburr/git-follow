@@ -2,6 +2,17 @@
 
 `git-follow` follows lifetime changes of a pathspec in Git, providing a simplified log and patch diff.
 
+## Table of Contents
+
+- [Installation](#installation)
+  + [Homebrew](#homebrew)
+  + [Manual](#manual)
+- [Environment](#environment)
+- [Options](#options)
+- [Notes](#notes)
+- [Examples](#examples)
+- [See Also](#see-also)
+
 ## Installation
 
 You can install `git-follow` via Homebrew or manually.
