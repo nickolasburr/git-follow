@@ -138,7 +138,7 @@ git follow --tag v1.5.3 -- graph.c
 git follow --total -- rebase.c
 ```
 
-<a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. "10 minutes ago"), you need to delimit the string with quotes.
+<a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. `"10 minutes ago"`), you need to delimit the string with quotes.
 
 ## See Also
 
