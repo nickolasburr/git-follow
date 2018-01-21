@@ -83,14 +83,22 @@ sub has_config;
 sub is_int;
 sub is_pathspec;
 sub is_repo;
-sub get_revr;
 sub get_format_ropt;
+sub get_revr;
+sub on_error;
 sub rm_copts;
 sub set_args;
-sub set_unary_opt;
 sub set_refspec;
+sub set_unary_opt;
 sub show_total;
 sub show_version;
+
+# Display usage information, and exit failure.
+sub on_error {
+	print "$USAGE_SYNOPSIS";
+
+	exit 1;
+}
 
 # Get git-config value.
 sub get_config {
