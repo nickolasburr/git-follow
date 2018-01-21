@@ -15,6 +15,8 @@ use File::Basename;
 use Getopt::Long;
 use GitFollow::Core;
 
+# @todo: Utilize $dispatch{"show_version"} instead.
+# -------------------------------------------
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
@@ -37,8 +39,7 @@ my @git_log = (
 );
 
 my %options;
-my $pathspec = undef;
-my $refspec  = undef;
+my ($pathspec, $refspec);
 
 my %git_log_options = (
 	"diff"   => "--word-diff=%s",
@@ -106,7 +107,7 @@ $pathspec = ($ARGV[$#ARGV] eq ".")
           ? &File::Basename::basename(getcwd)
           : $ARGV[$#ARGV];
 
-# @todo: Move this below Configure and GetOptions.
+# @todo: Utilize $dispatch{"show_total"} instead.
 # ------------------------------------------------
 # If --total (or -T) was given as an option, print
 # total number of revisions for pathspec and exit.
@@ -114,9 +115,12 @@ if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
 	&GitFollow::Core::show_total($pathspec);
 }
 
+my @apts = ();
+
 my %dispatch = (
-	"set_args"      => sub {
-		&GitFollow::Core::set_args((@_, \%options, \%dargs));
+	# Set alias, passthrough options and option arguments.
+	"set_apt_opt"   => sub {
+		push @apts, &GitFollow::Core::get_format_apt(($pathspec, @_));
 	},
 	"set_pager"     => sub {
 		$git_log[1] = "--paginate";
@@ -124,17 +128,20 @@ my %dispatch = (
 	"set_refspec"   => sub {
 		&GitFollow::Core::set_refspec((@_, \$refspec));
 	},
+	"set_unary_opt" => sub {
+		my $option = shift;
+
+		# Get formatted git-log(1) option from the unary option given.
+		$git_log_options{$option} = &GitFollow::Core::get_format_apt($pathspec, $option);
+
+		# Remove any conflicting options from %git_log_options.
+		&GitFollow::Core::rm_copts($option, \%copts, \%git_log_options);
+	},
 	"show_total"    => sub {
 		&GitFollow::Core::show_total($pathspec);
 	},
-	"set_unary_opt" => sub {
-		my $unary_opt = shift;
-
-		# Get formatted git-log(1) option from the unary option given.
-		$git_log_options{$unary_opt} = &GitFollow::Core::get_format_ropt($unary_opt);
-
-		# Remove any conflicting options from %git_log_options.
-		&GitFollow::Core::rm_copts($unary_opt, \%copts, \%git_log_options);
+	"show_version"  => sub {
+		&GitFollow::Core::show_version();
 	},
 );
 
@@ -145,32 +152,22 @@ my %dispatch = (
 );
 
 &Getopt::Long::GetOptions(
-	\%options,
 	'branch|b=s{1,1}'   => $dispatch{"set_refspec"},
-	'first|f',
-	'func|F=s{1,1}',
-	'last|l=i{0,1}'     => $dispatch{"set_args"},
-	'lines|L=i@{1,2}',
+	'first|f'           => $dispatch{"set_apt_opt"},
+	'func|F=s{1,1}'     => $dispatch{"set_apt_opt"},
+	'last|l=i{0,1}'     => $dispatch{"set_apt_opt"},
+	'lines|L=i@{1,2}'   => $dispatch{"set_apt_opt"},
 	'no-merges|M'       => $dispatch{"set_unary_opt"},
 	'no-patch|N'        => $dispatch{"set_unary_opt"},
 	'no-renames|O'      => $dispatch{"set_unary_opt"},
 	'pager|p'           => $dispatch{"set_pager"},
-	'pickaxe|P=s{1,1}',
-	'range|r=s@{1,2}',
+	'pickaxe|P=s{1,1}'  => $dispatch{"set_apt_opt"},
+	'range|r=s@{1,2}'   => $dispatch{"set_apt_opt"},
 	'reverse|R'         => $dispatch{"set_unary_opt"},
 	'tag|t=s{1,1}'      => $dispatch{"set_refspec"},
 	'total|T'           => $dispatch{"show_total"},
-	'version|V',
+	'version|V'         => $dispatch{"show_version"},
 ) or &GitFollow::Core::on_error();
-
-# Map to `git log` options, format the
-# command and pass to `system` builtin.
-my @ropts = ();
-
-# Iterate through options and option arguments (if applicable).
-while (my ($opt, $args) = each %options) {
-	push @ropts, &GitFollow::Core::get_format_ropt($opt, $args, $pathspec);
-}
 
 # Set default refspec if not given explicitly via --branch, --tag.
 $refspec = "HEAD" if not defined $refspec;
@@ -180,7 +177,7 @@ if (!&GitFollow::Core::is_pathspec($refspec, $pathspec)) {
 	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
 }
 
-system @git_log, @ropts, (values %git_log_options), $refspec, "--", $pathspec;
+system @git_log, @apts, (values %git_log_options), $refspec, "--", $pathspec;
 
 1;
 
