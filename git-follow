@@ -161,7 +161,7 @@ my %dispatch = (
 	'tag|t=s{1,1}'      => $dispatch{"set_refspec"},
 	'total|T'           => $dispatch{"show_total"},
 	'version|V',
-) or die "$GitFollow::Core::USAGE_SYNOPSIS";
+) or &GitFollow::Core::on_error();
 
 # Map to `git log` options, format the
 # command and pass to `system` builtin.
