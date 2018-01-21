@@ -11,9 +11,8 @@ use warnings;
 use Exporter qw(import);
 
 our @EXPORT_OK = qw(
-	get_format_ropt
+	get_format_apt
 	is_pathspec
-	set_args
 	set_refspec
 	set_unary_opt
 );
@@ -78,16 +77,15 @@ END_USAGE_SYNOPSIS
 ### git-follow(1) subroutines.
 ###
 
+sub get_format_apt;
+sub get_revr;
 sub get_config;
 sub has_config;
 sub is_int;
 sub is_pathspec;
 sub is_repo;
-sub get_format_ropt;
-sub get_revr;
 sub on_error;
 sub rm_copts;
-sub set_args;
 sub set_refspec;
 sub set_unary_opt;
 sub show_total;
@@ -180,9 +178,10 @@ sub get_revr {
 	return "$revr_start..$revr_end";
 }
 
-# Format the `git log` option with argument(s) given.
-sub get_format_ropt {
-	my ($opt, @args, $pathspec) = @_;
+# Format alias, passthrough options
+# and option arguments for git-log(1).
+sub get_format_apt {
+	my ($pathspec, $opt, @args) = @_;
 
 	if ($opt eq "first") {
 		return "--diff-filter=A";
@@ -234,15 +233,6 @@ sub rm_copts {
 	foreach my $cnopt (values @$cnopts) {
 		delete $git_log_options->{$cnopt} if exists $git_log_options->{$cnopt};
 	}
-}
-
-# Set argument for `$opt`, whether given to the option or default.
-sub set_args {
-	my ($opt, $arg, $options, $dargs) = @_;
-
-	# Update %options hash with either the given option
-	# argument or with the default option argument.
-	$$options{$opt} = !$arg ? $$dargs{$opt} : $arg;
 }
 
 # Update package-level `$refspec` with ref given via --branch or --tag.
