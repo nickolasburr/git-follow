@@ -199,9 +199,7 @@ sub get_format_apt {
 		return "--max-count=$num";
 	} elsif ($opt eq "lines") {
 		my @nums  = shift @args;
-		my $lines = shift @nums;
-		my $start = @$lines[0];
-		my $end   = @$lines[1];
+		my ($start, $end) = @nums;
 
 		# If no end range was given, only specify start and pathspec.
 		if (!$end) {
