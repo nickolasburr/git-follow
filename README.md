@@ -7,7 +7,7 @@
 - [Installation](#installation)
   + [Homebrew](#homebrew)
   + [Manual](#manual)
-- [Environment](#environment)
+- [Configuration](#configuration)
 - [Options](#options)
 - [Notes](#notes)
 - [Examples](#examples)
@@ -36,7 +36,7 @@ By default, files are installed to `/usr/local`. You can install to an alternate
 
 For example, `make PREFIX=$HOME/.usr/local`.
 
-## Environment
+## Configuration
 
 Configuration values set via git-config(1) can be used to customize the behavior of git-follow.
 
