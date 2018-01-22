@@ -23,6 +23,8 @@ if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
 	&GitFollow::Core::show_version();
 }
 
+my ($pathspec, $refspec);
+
 # Diff modes and their git-log(1) option counterparts.
 my %diffopts = (
 	"inline"   => "none",
@@ -30,16 +32,11 @@ my %diffopts = (
 	"colorsxs" => "color",
 );
 
-# Base components of `git log` shell command, represented
-# as an array to make it easier to pass to `system` builtin.
-my @git_log = (
-	"git",
-	"--paginate",
-	"log",
+my %git_log = (
+	"executable" => "/usr/bin/git",
+	"pager_mode" => "--paginate",
+	"command"    => "log",
 );
-
-my %options;
-my ($pathspec, $refspec);
 
 my %git_log_options = (
 	"diff"   => "--word-diff=%s",
@@ -50,13 +47,15 @@ my %git_log_options = (
 	"patch"  => "--patch-with-stat",
 );
 
+# follow.pager.disable configuration.
 if (&GitFollow::Core::has_config("pager", "disable") &&
     &GitFollow::Core::get_config("pager", "disable") eq "true") {
 
 	# Replace --paginate with --no-pager.
-	$git_log[1] = "--no-pager";
+	$git_log{"pager_mode"} = "--no-pager";
 }
 
+# follow.diff.mode configuration.
 if (&GitFollow::Core::has_config("diff", "mode")) {
 	my $diffmode = &GitFollow::Core::get_config("diff", "mode");
 
@@ -67,7 +66,7 @@ if (&GitFollow::Core::has_config("diff", "mode")) {
 	}
 }
 
-# Value to pass to --format option of git-log(1).
+# follow.log.format configuration.
 $git_log_options{"format"} = &GitFollow::Core::has_config("log", "format")
                            ? sprintf($git_log_options{"format"}, &GitFollow::Core::get_config("log", "format"))
                            : sprintf($git_log_options{"format"}, &GitFollow::Core::LOG_FMT);
@@ -123,7 +122,7 @@ my %dispatch = (
 		push @apts, &GitFollow::Core::get_format_apt(($pathspec, @_));
 	},
 	"set_pager"     => sub {
-		$git_log[1] = "--paginate";
+		$git_log{"pager_mode"} = "--paginate";
 	},
 	"set_refspec"   => sub {
 		&GitFollow::Core::set_refspec((@_, \$refspec));
@@ -177,7 +176,7 @@ if (!&GitFollow::Core::is_pathspec($refspec, $pathspec)) {
 	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
 }
 
-system @git_log, @apts, (values %git_log_options), $refspec, "--", $pathspec;
+system values %git_log, @apts, values %git_log_options, $refspec, "--", $pathspec;
 
 1;
 
