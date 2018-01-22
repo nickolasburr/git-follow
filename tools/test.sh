@@ -35,9 +35,9 @@ for OPTIONS in "${TESTS[@]}"; do
 	eval "./$TARGET $OPTIONS -- $TARGET" >/dev/null 2>&1
 
 	if [[ $? -eq 0 ]]; then
-		printf 'OK: ./%s %s -- %s\n' "$TARGET" "$OPTIONS" "$TARGET"
+		printf 'OK ./%s %s -- %s\n' "$TARGET" "$OPTIONS" "$TARGET"
 	else
-		printf 'ERROR: ./%s %s -- %s\n' "$TARGET" "$OPTIONS" "$TARGET"
+		printf 'ERROR ./%s %s -- %s\n' "$TARGET" "$OPTIONS" "$TARGET"
 
 		ERROR=1
 
