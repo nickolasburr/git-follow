@@ -176,7 +176,10 @@ if (!&GitFollow::Core::is_pathspec($refspec, $pathspec)) {
 	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
 }
 
-system values %git_log, @apts, values %git_log_options, $refspec, "--", $pathspec;
+# Retain order of %git_log values in an array.
+my @git_log = ($git_log{"executable"}, $git_log{"pager_mode"}, $git_log{"command"});
+
+system @git_log, @apts, values %git_log_options, $refspec, "--", $pathspec;
 
 1;
 
