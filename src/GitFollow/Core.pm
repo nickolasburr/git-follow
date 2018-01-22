@@ -212,11 +212,10 @@ sub get_format_apt {
 
 		return "-S$subject";
 	} elsif ($opt eq "range") {
-		my $revs       = shift @args;
-		my $revr_start = @$revs[0];
-		my $revr_end   = @$revs[1];
+		my @revs = shift @args;
+		my ($start, $end) = @revs;
 
-		return &get_revr($revr_start, $revr_end);
+		return &get_revr($start, $end);
 	} else {
 		return "--$opt";
 	}
