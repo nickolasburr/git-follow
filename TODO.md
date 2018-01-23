@@ -1,9 +1,5 @@
 # Todo
 
-## Bugs
-
-None reported.
-
 ## Features
 
 #### Upcoming
