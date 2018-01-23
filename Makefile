@@ -9,7 +9,7 @@ TOOLS  = tools
 
 all: install
 
-install:
+install: test
 	@unset CDPATH; cd $(TOOLS) && ./install.sh $(PREFIX)
 
 test:
