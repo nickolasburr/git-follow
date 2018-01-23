@@ -50,7 +50,6 @@ my %git_log_options = (
 
 # follow.pager.disable configuration.
 if (&has_config("pager", "disable") and &get_config("pager", "disable") eq "true") {
-
 	# Replace --paginate with --no-pager.
 	$git_log{"pager_mode"} = "--no-pager";
 }
