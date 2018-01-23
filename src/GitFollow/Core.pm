@@ -10,11 +10,18 @@ use strict;
 use warnings;
 use Exporter qw(import);
 
-our @EXPORT_OK = qw(
+our @EXPORT = qw(
+	get_config
 	get_format_apt
+	has_config
 	is_pathspec
+	is_repo
+	on_error
+	rm_copts
 	set_refspec
 	set_unary_opt
+	show_total
+	show_version
 );
 
 our %parts = (
