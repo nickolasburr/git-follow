@@ -86,7 +86,7 @@ END_USAGE_SYNOPSIS
 ###
 
 sub get_format_apt;
-sub get_revr;
+sub get_rev_range;
 sub get_config;
 sub has_config;
 sub is_int;
@@ -167,23 +167,13 @@ sub is_repo {
 }
 
 # Get revision range via start and end boundaries.
-sub get_revr {
-	my $revr_start = shift;
-	my $revr_end   = shift;
+sub get_rev_range {
+	my ($start, $end) = @_;
 
-	# If no end rev was given, default to HEAD.
-	$revr_end = "HEAD" if not defined $revr_end;
+	# If no end revision was given, default to HEAD.
+	$end = "HEAD" if not defined $end;
 
-	# If only an integer was given, interpolate
-	# as a rev range for the current branch.
-	# --------------------------------------------
-	# @todo: Allow refname before '@{n}', either as argument
-	# (e.g. --branch master --range 3 5), or passed directly
-	# to --range option (e.g. --range master 3 5).
-	$revr_start = "\@{$revr_start}" if &is_int($revr_start);
-	$revr_end   = "\@{$revr_end}" if &is_int($revr_end);
-
-	return "$revr_start..$revr_end";
+	return "$start..$end";
 }
 
 # Format alias, passthrough options
@@ -223,7 +213,7 @@ sub get_format_apt {
 		my @revs = shift @args;
 		my ($start, $end) = @revs;
 
-		return &get_revr($start, $end);
+		return &get_rev_range($start, $end);
 	} else {
 		return "--$opt";
 	}
