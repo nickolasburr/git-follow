@@ -23,6 +23,7 @@ if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
 	&show_version();
 }
 
+our $LOG_FMT;
 my ($pathspec, $refspec);
 
 # Diff modes and their git-log(1) option counterparts.
@@ -48,8 +49,7 @@ my %git_log_options = (
 );
 
 # follow.pager.disable configuration.
-if (&has_config("pager", "disable") &&
-    &get_config("pager", "disable") eq "true") {
+if (&has_config("pager", "disable") and &get_config("pager", "disable") eq "true") {
 
 	# Replace --paginate with --no-pager.
 	$git_log{"pager_mode"} = "--no-pager";
@@ -67,9 +67,7 @@ if (&has_config("diff", "mode")) {
 }
 
 # follow.log.format configuration.
-$git_log_options{"format"} = &has_config("log", "format")
-                           ? sprintf($git_log_options{"format"}, &get_config("log", "format"))
-                           : sprintf($git_log_options{"format"}, &GitFollow::Core::LOG_FMT);
+$git_log_options{"format"} = sprintf($git_log_options{"format"}, (&has_config("log", "format") ? &get_config("log", "format") : $LOG_FMT));
 
 # Options and their conflicting counterparts.
 my %copts = (
