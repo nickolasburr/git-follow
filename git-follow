@@ -20,7 +20,7 @@ use GitFollow::Core;
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
 if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	&GitFollow::Core::show_version();
+	&show_version();
 }
 
 my ($pathspec, $refspec);
@@ -48,16 +48,16 @@ my %git_log_options = (
 );
 
 # follow.pager.disable configuration.
-if (&GitFollow::Core::has_config("pager", "disable") &&
-    &GitFollow::Core::get_config("pager", "disable") eq "true") {
+if (&has_config("pager", "disable") &&
+    &get_config("pager", "disable") eq "true") {
 
 	# Replace --paginate with --no-pager.
 	$git_log{"pager_mode"} = "--no-pager";
 }
 
 # follow.diff.mode configuration.
-if (&GitFollow::Core::has_config("diff", "mode")) {
-	my $diffmode = &GitFollow::Core::get_config("diff", "mode");
+if (&has_config("diff", "mode")) {
+	my $diffmode = &get_config("diff", "mode");
 
 	if (grep { $_ eq $diffmode } keys %diffopts) {
 		$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, $diffopts{$diffmode});
@@ -67,8 +67,8 @@ if (&GitFollow::Core::has_config("diff", "mode")) {
 }
 
 # follow.log.format configuration.
-$git_log_options{"format"} = &GitFollow::Core::has_config("log", "format")
-                           ? sprintf($git_log_options{"format"}, &GitFollow::Core::get_config("log", "format"))
+$git_log_options{"format"} = &has_config("log", "format")
+                           ? sprintf($git_log_options{"format"}, &get_config("log", "format"))
                            : sprintf($git_log_options{"format"}, &GitFollow::Core::LOG_FMT);
 
 # Options and their conflicting counterparts.
@@ -97,7 +97,7 @@ my %dargs = (
 @ARGV or die "$GitFollow::Core::USAGE_SYNOPSIS";
 
 # Validate we're inside a Git repository.
-if (!&GitFollow::Core::is_repo()) {
+if (!&is_repo()) {
 	# @todo: Build option to silence FYI output.
 	die sprintf("%s\n%s", sprintf($GitFollow::Core::INVALID_REPO_ERR, getcwd), $GitFollow::Core::INVALID_REPO_HINT);
 }
@@ -111,7 +111,7 @@ $pathspec = ($ARGV[$#ARGV] eq ".")
 # If --total (or -T) was given as an option, print
 # total number of revisions for pathspec and exit.
 if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
-	&GitFollow::Core::show_total($pathspec);
+	&show_total($pathspec);
 }
 
 my @apts = ();
@@ -119,28 +119,28 @@ my @apts = ();
 my %dispatch = (
 	# Set alias, passthrough options and option arguments.
 	"set_apt_opt"   => sub {
-		push @apts, &GitFollow::Core::get_format_apt(($pathspec, @_));
+		push @apts, &get_format_apt(($pathspec, @_));
 	},
 	"set_pager"     => sub {
 		$git_log{"pager_mode"} = "--paginate";
 	},
 	"set_refspec"   => sub {
-		&GitFollow::Core::set_refspec((@_, \$refspec));
+		&set_refspec((@_, \$refspec));
 	},
 	"set_unary_opt" => sub {
 		my $option = shift;
 
 		# Get formatted git-log(1) option from the unary option given.
-		$git_log_options{$option} = &GitFollow::Core::get_format_apt($pathspec, $option);
+		$git_log_options{$option} = &get_format_apt($pathspec, $option);
 
 		# Remove any conflicting options from %git_log_options.
-		&GitFollow::Core::rm_copts($option, \%copts, \%git_log_options);
+		&rm_copts($option, \%copts, \%git_log_options);
 	},
 	"show_total"    => sub {
-		&GitFollow::Core::show_total($pathspec);
+		&show_total($pathspec);
 	},
 	"show_version"  => sub {
-		&GitFollow::Core::show_version();
+		&show_version();
 	},
 );
 
@@ -166,13 +166,13 @@ my %dispatch = (
 	'tag|t=s{1,1}'      => $dispatch{"set_refspec"},
 	'total|T'           => $dispatch{"show_total"},
 	'version|V'         => $dispatch{"show_version"},
-) or &GitFollow::Core::on_error();
+) or &on_error();
 
 # Set default refspec if not given explicitly via --branch, --tag.
 $refspec = "HEAD" if not defined $refspec;
 
 # If pathspec was not a valid file object, emit an error and kill the script.
-if (!&GitFollow::Core::is_pathspec($refspec, $pathspec)) {
+if (!&is_pathspec($refspec, $pathspec)) {
 	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
 }
 
