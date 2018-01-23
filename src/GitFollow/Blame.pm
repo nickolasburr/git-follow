@@ -10,5 +10,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 
-sub get_diff;
-sub get_hash;
+sub get_hunk;
+sub get_hunks;
+sub get_line;
+sub get_lines;
