@@ -22,6 +22,7 @@ our @EXPORT = qw(
 	set_unary_opt
 	show_total
 	show_version
+	$LOG_FMT
 );
 
 our %parts = (
