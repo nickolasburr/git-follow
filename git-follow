@@ -158,7 +158,7 @@ my %dispatch = (
 	'no-renames|O'      => $dispatch{"set_unary_opt"},
 	'pager|p'           => $dispatch{"set_pager"},
 	'pickaxe|P=s{1,1}'  => $dispatch{"set_apt_opt"},
-	'range|r=s@{1,2}'   => $dispatch{"set_apt_opt"},
+	'range|r=s@{1,1}'   => $dispatch{"set_apt_opt"},
 	'reverse|R'         => $dispatch{"set_unary_opt"},
 	'tag|t=s{1,1}'      => $dispatch{"set_refspec"},
 	'total|T'           => $dispatch{"show_total"},
