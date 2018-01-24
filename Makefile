@@ -7,9 +7,9 @@ TOOLS  = tools
 
 .PHONY: all install uninstall
 
-all: install
+all: test
 
-install: test
+install:
 	@unset CDPATH; cd $(TOOLS) && ./install.sh $(PREFIX)
 
 test:
