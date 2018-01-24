@@ -30,6 +30,7 @@ brew install git-follow
 git clone https://github.com/nickolasburr/git-follow.git
 cd git-follow
 make
+make install
 ```
 
 By default, files are installed to `/usr/local`. You can install to an alternate location by passing `PREFIX` to `make`.
