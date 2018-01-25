@@ -237,33 +237,35 @@ sub set_refspec {
 	my ($opt, $ref, $refspec) = @_;
 
 	# If `$refspec` is already defined, notify the user and emit an error,
-	# as you can't give both `--branch` and `--tag` options simultaneously.
-	if (defined $$refspec) {
-		die "$INVALID_REF_COMBO";
-	}
+	# as options `--branch`, `--range`, and `--tag` are mutually exclusive.
+	die "$INVALID_REF_COMBO" if not length $refspec;
 
-	my $refs = `git $opt --list`;
-	my $remotes = `git branch -r` if $opt eq "branch";
-	$refs = $refs . $remotes if defined $remotes;
-
-	# Filter asterisk, escape codes from `git {branch,tag} --list`.
-	$refs =~ s/\*//gi;
-	$refs =~ s/\033\[\d*(;\d*)*m//g;
-
-	# Split refspecs into an array, trim whitespace from each element.
-	my @refspecs = split "\n", $refs;
-	@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
-
-	# If `$ref` is indeed a valid refspec, update `$refspec`.
-	if (grep /^$ref$/, @refspecs) {
-		$$refspec = $ref;
+	if ($opt eq "range") {
+		$$refspec = &get_rev_range($ref);
 	} else {
-		# Otherwise, emit an error specific to
-		# the option given and exit the script.
-		if ($opt eq "branch") {
-			die sprintf($INVALID_BRANCHREF, $ref);
-		} elsif ($opt eq "tag") {
-			die sprintf($INVALID_TAGREF, $ref);
+		my $refs = `git $opt --list`;
+		my $remotes = `git branch -r` if $opt eq "branch";
+		$refs = $refs . $remotes if defined $remotes;
+
+		# Filter asterisk, escape codes from `git {branch,tag} --list`.
+		$refs =~ s/\*//gi;
+		$refs =~ s/\033\[\d*(;\d*)*m//g;
+
+		# Split refspecs into an array, trim whitespace from each element.
+		my @refspecs = split "\n", $refs;
+		@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
+
+		# If `$ref` is indeed a valid refspec, update `$refspec`.
+		if (grep /^$ref$/, @refspecs) {
+			$$refspec = $ref;
+		} else {
+			# Otherwise, emit an error specific to
+			# the option given and exit the script.
+			if ($opt eq "branch") {
+				die sprintf($INVALID_BRANCHREF, $ref);
+			} elsif ($opt eq "tag") {
+				die sprintf($INVALID_TAGREF, $ref);
+			}
 		}
 	}
 }
