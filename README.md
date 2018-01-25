@@ -119,7 +119,7 @@ git follow --range aa03428,b354ef9 -- worktree.c
 git follow --range v1.5.3,v1.5.4 -- apply.c
 ```
 
-**Display commits up to tag `v1.5.3` which affected `graph.c`**
+**Display commits since tag `v1.5.3` which affected `graph.c`**
 
 ```
 git follow --tag v1.5.3 -- graph.c
