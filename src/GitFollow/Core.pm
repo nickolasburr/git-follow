@@ -157,10 +157,10 @@ sub is_int {
 
 # Determine if pathspec is a valid file object.
 sub is_pathspec {
-	my ($refname, $target) = @_;
+	my ($refspec, $pathspec) = @_;
 
 	# Validate pathspec via git-cat-file.
-	system("git cat-file -e $refname:$target &>/dev/null");
+	system("git cat-file -e $refspec:$pathspec &>/dev/null");
 
 	!($? >> 8);
 }
@@ -174,7 +174,8 @@ sub is_repo {
 
 # Get revision range via start and end boundaries.
 sub get_rev_range {
-	my ($start, $end) = @_;
+	my $range = shift;
+	my ($start, $end) = split ',', $range;
 
 	# If no end revision was given, default to HEAD.
 	$end = "HEAD" if not defined $end;
