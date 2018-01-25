@@ -23,6 +23,11 @@ our @EXPORT = qw(
 	show_total
 	show_version
 	$LOG_FMT
+	$INVALID_PATH_ERR
+	$INVALID_PATH_WITHIN_RANGE_ERR
+	$INVALID_REPO_ERR
+	$INVALID_REPO_HINT
+	$USAGE_SYNOPSIS
 );
 
 our %parts = (
@@ -57,6 +62,7 @@ our $INVALID_REF_COMBO = "Only one --branch or one --tag option can be specified
 our $INVALID_REPO_ERR  = "%s is not a Git repository.\n";
 our $INVALID_REPO_HINT = "FYI: If you don't want to change directories, you can run 'git -C /path/to/repository follow ...'\n";
 our $INVALID_PATH_ERR  = "%s is not a valid pathspec.\n";
+our $INVALID_PATH_WITHIN_RANGE_ERR = "%s is not a valid pathspec within range %s.\n";
 our $USAGE_SYNOPSIS    = <<"END_USAGE_SYNOPSIS";
 
   Usage: git follow [OPTIONS] [--] pathspec
@@ -151,10 +157,10 @@ sub is_int {
 
 # Determine if pathspec is a valid file object.
 sub is_pathspec {
-	my ($refname, $target) = @_;
+	my ($refspec, $pathspec) = @_;
 
 	# Validate pathspec via git-cat-file.
-	system("git cat-file -e $refname:$target &>/dev/null");
+	system("git cat-file -e $refspec:$pathspec &>/dev/null");
 
 	!($? >> 8);
 }
@@ -168,7 +174,8 @@ sub is_repo {
 
 # Get revision range via start and end boundaries.
 sub get_rev_range {
-	my ($start, $end) = @_;
+	my $range = shift;
+	my ($start, $end) = split ',', $range;
 
 	# If no end revision was given, default to HEAD.
 	$end = "HEAD" if not defined $end;
@@ -209,11 +216,6 @@ sub get_format_apt {
 		my $subject = shift @args;
 
 		return "-S$subject";
-	} elsif ($opt eq "range") {
-		my @revs = shift @args;
-		my ($start, $end) = @revs;
-
-		return &get_rev_range($start, $end);
 	} else {
 		return "--$opt";
 	}
@@ -235,33 +237,35 @@ sub set_refspec {
 	my ($opt, $ref, $refspec) = @_;
 
 	# If `$refspec` is already defined, notify the user and emit an error,
-	# as you can't give both `--branch` and `--tag` options simultaneously.
-	if (defined $$refspec) {
-		die "$INVALID_REF_COMBO";
-	}
+	# as options `--branch`, `--range`, and `--tag` are mutually exclusive.
+	die "$INVALID_REF_COMBO" if not length $refspec;
 
-	my $refs = `git $opt --list`;
-	my $remotes = `git branch -r` if $opt eq "branch";
-	$refs = $refs . $remotes if defined $remotes;
-
-	# Filter asterisk, escape codes from `git {branch,tag} --list`.
-	$refs =~ s/\*//gi;
-	$refs =~ s/\033\[\d*(;\d*)*m//g;
-
-	# Split refspecs into an array, trim whitespace from each element.
-	my @refspecs = split "\n", $refs;
-	@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
-
-	# If `$ref` is indeed a valid refspec, update `$refspec`.
-	if (grep /^$ref$/, @refspecs) {
-		$$refspec = $ref;
+	if ($opt eq "range") {
+		$$refspec = &get_rev_range($ref);
 	} else {
-		# Otherwise, emit an error specific to
-		# the option given and exit the script.
-		if ($opt eq "branch") {
-			die sprintf($INVALID_BRANCHREF, $ref);
-		} elsif ($opt eq "tag") {
-			die sprintf($INVALID_TAGREF, $ref);
+		my $refs = `git $opt --list`;
+		my $remotes = `git branch -r` if $opt eq "branch";
+		$refs = $refs . $remotes if defined $remotes;
+
+		# Filter asterisk, escape codes from `git {branch,tag} --list`.
+		$refs =~ s/\*//gi;
+		$refs =~ s/\033\[\d*(;\d*)*m//g;
+
+		# Split refspecs into an array, trim whitespace from each element.
+		my @refspecs = split "\n", $refs;
+		@refspecs = grep { $_ =~ s/^\s+//; $_; } @refspecs;
+
+		# If `$ref` is indeed a valid refspec, update `$refspec`.
+		if (grep /^$ref$/, @refspecs) {
+			$$refspec = $ref;
+		} else {
+			# Otherwise, emit an error specific to
+			# the option given and exit the script.
+			if ($opt eq "branch") {
+				die sprintf($INVALID_BRANCHREF, $ref);
+			} elsif ($opt eq "tag") {
+				die sprintf($INVALID_TAGREF, $ref);
+			}
 		}
 	}
 }
