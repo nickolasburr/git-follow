@@ -19,9 +19,7 @@ use GitFollow::Core;
 # -------------------------------------------
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
-if (grep { $_ eq "--version" || $_ eq "-V" } @ARGV) {
-	&show_version();
-}
+&show_version() if grep { $_ eq "--version" or $_ eq "-V" } @ARGV;
 
 our $LOG_FMT;
 my ($pathspec, $refspec);
@@ -48,21 +46,17 @@ my %git_log_options = (
 	"patch"  => "--patch-with-stat",
 );
 
-# follow.pager.disable configuration.
-if (&has_config("pager", "disable") and &get_config("pager", "disable") eq "true") {
-	# Replace --paginate with --no-pager.
-	$git_log{"pager_mode"} = "--no-pager";
-}
+# follow.pager.disable configuration. Replace --paginate with --no-pager if set to true.
+$git_log{"pager_mode"} = "--no-pager" if &has_config("pager", "disable") and &get_config("pager", "disable") eq "true";
 
 # follow.diff.mode configuration.
 if (&has_config("diff", "mode")) {
 	my $diffmode = &get_config("diff", "mode");
 
-	if (grep { $_ eq $diffmode } keys %diffopts) {
-		$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, $diffopts{$diffmode});
-	} else {
-		die sprintf("Invalid value '%s' specified for follow.diff.mode\n", $diffmode);
-	}
+	die sprintf("Invalid value '%s' specified for follow.diff.mode\n", $diffmode) unless grep { $_ eq $diffmode } keys %diffopts;
+
+	# Set corresponding --word-diff config value.
+	$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, $diffopts{$diffmode});
 }
 
 # follow.log.format configuration.
@@ -91,13 +85,10 @@ my %dargs = (
 	"lines" => 1,
 );
 
-@ARGV or die "$GitFollow::Core::USAGE_SYNOPSIS";
+die "$USAGE_SYNOPSIS" unless @ARGV;
 
 # Validate we're inside a Git repository.
-if (!&is_repo()) {
-	# @todo: Build option to silence FYI output.
-	die sprintf("%s\n%s", sprintf($GitFollow::Core::INVALID_REPO_ERR, getcwd), $GitFollow::Core::INVALID_REPO_HINT);
-}
+die sprintf("%s\n%s", sprintf($INVALID_REPO_ERR, getcwd), $INVALID_REPO_HINT) unless &is_repo();
 
 $pathspec = ($ARGV[$#ARGV] eq ".")
           ? &File::Basename::basename(getcwd)
@@ -107,9 +98,7 @@ $pathspec = ($ARGV[$#ARGV] eq ".")
 # ------------------------------------------------
 # If --total (or -T) was given as an option, print
 # total number of revisions for pathspec and exit.
-if (grep { $_ eq "--total" || $_ eq "-T" } @ARGV) {
-	&show_total($pathspec);
-}
+&show_total($pathspec) if grep { $_ eq "--total" or $_ eq "-T" } @ARGV;
 
 my @apts = ();
 
@@ -165,8 +154,8 @@ my %dispatch = (
 	'version|V'         => $dispatch{"show_version"},
 ) or &on_error();
 
-# Set default refspec if not given explicitly via --branch, --tag.
-$refspec = "HEAD" if not defined $refspec;
+# Set default refspec if not given explicitly via --branch, --range, or --tag.
+$refspec = "HEAD" unless defined $refspec;
 
 # If pathspec was not a valid file object, emit an error and kill the script.
 if (!&is_pathspec($refspec, $pathspec)) {
