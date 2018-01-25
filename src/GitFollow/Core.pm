@@ -23,6 +23,11 @@ our @EXPORT = qw(
 	show_total
 	show_version
 	$LOG_FMT
+	$INVALID_PATH_ERR
+	$INVALID_PATH_WITHIN_RANGE_ERR
+	$INVALID_REPO_ERR
+	$INVALID_REPO_HINT
+	$USAGE_SYNOPSIS
 );
 
 our %parts = (
@@ -57,6 +62,7 @@ our $INVALID_REF_COMBO = "Only one --branch or one --tag option can be specified
 our $INVALID_REPO_ERR  = "%s is not a Git repository.\n";
 our $INVALID_REPO_HINT = "FYI: If you don't want to change directories, you can run 'git -C /path/to/repository follow ...'\n";
 our $INVALID_PATH_ERR  = "%s is not a valid pathspec.\n";
+our $INVALID_PATH_WITHIN_RANGE_ERR = "%s is not a valid pathspec within range %s.\n";
 our $USAGE_SYNOPSIS    = <<"END_USAGE_SYNOPSIS";
 
   Usage: git follow [OPTIONS] [--] pathspec
