@@ -107,24 +107,16 @@ git follow --last 3 --lines 10 15 -- bisect.c
 git follow --func funcname -- archive.c
 ```
 
-**Display commits in range `fifth ancestor of master` (`master@{5}`) to `HEAD` which affected `worktree.c`**
+**Display commits in range from commit `aa03428` to commit `b354ef9` which affected worktree.c**
 
 ```
-git follow --range master@{5} -- worktree.c
+git follow --range aa03428,b354ef9 -- worktree.c
 ```
 
---OR--
-
-Same as above (assuming currently checked out branch is `master`).
+**Display commits in range from tag `v1.5.3` to tag `v1.5.4` which affected apply.c**
 
 ```
-git follow --range 5 -- worktree.c
-```
-
-**Display commits in range `2 days ago` and `1 hour ago` which affected `apply.c`**<sup>[1](#relative-format)</sup>
-
-```
-git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
+git follow --range v1.5.3,v1.5.4 -- apply.c
 ```
 
 **Display commits up to tag `v1.5.3` which affected `graph.c`**
@@ -138,8 +130,6 @@ git follow --tag v1.5.3 -- graph.c
 ```
 git follow --total -- rebase.c
 ```
-
-<a name="#relative-format">1</a>: If you give a relative time/date that includes spaces (e.g. `"10 minutes ago"`), you need to delimit the string with quotes.
 
 ## See Also
 
