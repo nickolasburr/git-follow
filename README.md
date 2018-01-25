@@ -33,9 +33,9 @@ make
 make install
 ```
 
-By default, files are installed to `/usr/local`. You can install to an alternate location by passing `PREFIX` to `make`.
+By default, files are installed to `/usr/local`. You can install to an alternate location by passing `PREFIX` to `make install`.
 
-For example, `make PREFIX=$HOME/.usr/local`.
+For example, `make install PREFIX=$HOME/.usr/local`.
 
 ## Configuration
 
