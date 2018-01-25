@@ -21,8 +21,9 @@ use GitFollow::Core;
 # print the current release version and exit.
 &show_version() if grep { $_ eq "--version" or $_ eq "-V" } @ARGV;
 
-our $LOG_FMT;
-my ($pathspec, $refspec);
+our ($LOG_FMT, $INVALID_PATH_ERR, $INVALID_PATH_WITHIN_RANGE_ERR);
+our ($INVALID_REPO_ERR, $INVALID_REPO_HINT);
+my ($pathspec, $refspec, @refs);
 
 # Diff modes and their git-log(1) option counterparts.
 my %diffopts = (
@@ -32,7 +33,7 @@ my %diffopts = (
 );
 
 my %git_log = (
-	"executable" => "/usr/bin/git",
+	"exec"       => "/usr/bin/git",
 	"pager_mode" => "--paginate",
 	"command"    => "log",
 );
@@ -137,35 +138,39 @@ my %dispatch = (
 );
 
 &Getopt::Long::GetOptions(
-	'branch|b=s{1,1}'   => $dispatch{"set_refspec"},
-	'first|f'           => $dispatch{"set_apt_opt"},
-	'func|F=s{1,1}'     => $dispatch{"set_apt_opt"},
-	'last|l=i{0,1}'     => $dispatch{"set_apt_opt"},
-	'lines|L=i@{1,2}'   => $dispatch{"set_apt_opt"},
-	'no-merges|M'       => $dispatch{"set_unary_opt"},
-	'no-patch|N'        => $dispatch{"set_unary_opt"},
-	'no-renames|O'      => $dispatch{"set_unary_opt"},
-	'pager|p'           => $dispatch{"set_pager"},
-	'pickaxe|P=s{1,1}'  => $dispatch{"set_apt_opt"},
-	'range|r=s@{1,1}'   => $dispatch{"set_apt_opt"},
-	'reverse|R'         => $dispatch{"set_unary_opt"},
-	'tag|t=s{1,1}'      => $dispatch{"set_refspec"},
-	'total|T'           => $dispatch{"show_total"},
-	'version|V'         => $dispatch{"show_version"},
+	'branch|b=s{1,1}'  => $dispatch{"set_refspec"},
+	'first|f'          => $dispatch{"set_apt_opt"},
+	'func|F=s{1,1}'    => $dispatch{"set_apt_opt"},
+	'last|l=i{0,1}'    => $dispatch{"set_apt_opt"},
+	'lines|L=i@{1,2}'  => $dispatch{"set_apt_opt"},
+	'no-merges|M'      => $dispatch{"set_unary_opt"},
+	'no-patch|N'       => $dispatch{"set_unary_opt"},
+	'no-renames|O'     => $dispatch{"set_unary_opt"},
+	'pager|p'          => $dispatch{"set_pager"},
+	'pickaxe|P=s{1,1}' => $dispatch{"set_apt_opt"},
+	'range|r=s{1,1}'   => $dispatch{"set_refspec"},
+	'reverse|R'        => $dispatch{"set_unary_opt"},
+	'tag|t=s{1,1}'     => $dispatch{"set_refspec"},
+	'total|T'          => $dispatch{"show_total"},
+	'version|V'        => $dispatch{"show_version"},
 ) or &on_error();
 
 # Set default refspec if not given explicitly via --branch, --range, or --tag.
 $refspec = "HEAD" unless defined $refspec;
 
-# If pathspec was not a valid file object, emit an error and kill the script.
-if (!&is_pathspec($refspec, $pathspec)) {
-	die sprintf($GitFollow::Core::INVALID_PATH_ERR, $pathspec);
+# In the event of a range, split the range at ".." delimiter.
+@refs = split /\.\./, $refspec;
+
+# When --range was given with <start> and <end> values.
+if (@refs) {
+	foreach my $ref (@refs) {
+		die sprintf($INVALID_PATH_WITHIN_RANGE_ERR, $pathspec, $refspec) unless &is_pathspec($ref, $pathspec);
+	}
+} else {
+	die sprintf($INVALID_PATH_ERR, $pathspec) unless &is_pathspec($refspec, $pathspec);
 }
 
-# Retain order of %git_log values in an array.
-my @git_log = ($git_log{"executable"}, $git_log{"pager_mode"}, $git_log{"command"});
-
-system @git_log, @apts, values %git_log_options, $refspec, "--", $pathspec;
+system $git_log{"exec"}, $git_log{"pager_mode"}, $git_log{"command"}, @apts, values %git_log_options, $refspec, "--", $pathspec;
 
 1;
 
