@@ -98,7 +98,7 @@ git follow --last --lines 5 -- diff.c
 **Display last 3 commits where lines 10 through 15 were affected in `bisect.c`**
 
 ```
-git follow --last 3 --lines 10 15 -- bisect.c
+git follow --last 3 --lines 10,15 -- bisect.c
 ```
 
 **Display commits where function `funcname` was affected in `archive.c`**
