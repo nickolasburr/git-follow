@@ -53,13 +53,13 @@ Options can be specified to provide more refined information. If no options are 
 + `--first`, `-f`: Show first commit where Git initiated tracking of pathspec.
 + `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1).
 + `--last`, `-l` `[<count>]`: Show last `<count>` commits where pathspec was affected. Omitting `<count>` defaults to last commit.
-+ `--lines`, `-L` `<start>` `[<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to `EOF`.
++ `--lines`, `-L` `<start>[,<end>]`: Show commits which affected lines `<start>` to `<end>`. Omitting `<end>` defaults to `EOF`.
 + `--no-merges`, `-M`: Show commits which have a maximum of one parent. See [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges) of git-log(1).
 + `--no-patch`, `-N`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1).
 + `--no-renames`, `-O`: Disable rename detection. See [`--no-renames`](https://git-scm.com/docs/git-log#git-log---no-renames) of git-log(1).
 + `--pager`, `-p`: Force pager when invoking git-log(1). Overrides follow.pager.disabled config value.
 + `--pickaxe`, `-P` `<string>`: Show commits which change the number of occurrences of `<string>` in pathspec. See [`-S`](https://git-scm.com/docs/git-log#git-log--Sltstringgt) of git-log(1).
-+ `--range`, `-r` `<startref>[,<endref>]`: Show commits in range `<startref>` to `<endref>`. Omitting `<endref>` defaults to `HEAD`. See gitrevisions(1).
++ `--range`, `-r` `<start>[,<end>]`: Show commits in range `<start>` to `<end>`. Omitting `<end>` defaults to `HEAD`. See gitrevisions(1).
 + `--reverse`, `-R`: Show commits in reverse chronological order. See [`--walk-reflogs`](https://git-scm.com/docs/git-log#git-log---walk-reflogs) of git-log(1).
 + `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
 + `--total`, `-T`: Show total number of commits for pathspec.
