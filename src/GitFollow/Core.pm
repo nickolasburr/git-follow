@@ -58,6 +58,7 @@ our $GIT_FOLLOW_NO_PAGER   = undef;
 
 our $INVALID_BRANCHREF = "%s is not a valid branch.\n";
 our $INVALID_TAGREF    = "%s is not a valid tag.\n";
+our $INVALID_NUM_ARG   = "%s is not a valid number.\n";
 our $INVALID_REF_COMBO = "Only one --branch or one --tag option can be specified at a time.\n";
 our $INVALID_REPO_ERR  = "%s is not a Git repository.\n";
 our $INVALID_REPO_HINT = "FYI: If you don't want to change directories, you can run 'git -C /path/to/repository follow ...'\n";
@@ -201,16 +202,17 @@ sub get_format_apt {
 			$num = 1;
 		}
 
+		die sprintf($INVALID_NUM_ARG, $num) unless &is_int($num);
+
 		return "--max-count=$num";
 	} elsif ($opt eq "lines") {
-		my @nums  = shift @args;
-		my ($start, $end) = @nums;
+		my $lines = shift @args;
+		my ($start, $end) = split ',', $lines;
 
-		# If no end range was given, only specify start and pathspec.
-		if (!$end) {
-			return "-L $start:$pathspec"
+		if (defined $end) {
+			return "-L$start,$end:$pathspec";
 		} else {
-			return "-L $start,$end:$pathspec";
+			return "-L$start:$pathspec"
 		}
 	} elsif ($opt eq "pickaxe") {
 		my $subject = shift @args;
