@@ -24,13 +24,23 @@ eval "$SED $SEDOPTS $SEDMATCH $TARGET"
 ERROR=0
 TESTS=(
 	"--last=5 --no-merges --no-renames"
-	"--first --no-patch --branch origin/master"
+	"-l 5 -M -O"
+	"--first --no-patch --branch=origin/master"
+	"-f -N -b origin/master"
 	"--last --no-merges --no-patch"
+	"-l -M -N"
 	"--func=in_array --no-renames"
+	"-F in_array -O"
 	"--pickaxe=git_track_map_aliases --last --no-patch"
+	"-P git_track_map_aliases -l -N"
 	"--range 954829d,67bfd35 --no-patch"
+	"-r 954829d,67bfd35 -N"
 	"--branch origin/master --last --no-merges"
+	"-b origin/master -l -M"
 	"--last=3 --lines=20,35 --no-merges --no-renames"
+	"-l 3 -L 20,35 -M -O"
+	"--reverse --last=5 --no-merges --no-renames"
+	"-R -l 5 -M -O"
 )
 
 for OPTIONS in "${TESTS[@]}"; do
