@@ -27,9 +27,10 @@ TESTS=(
 	"--first --no-patch --branch origin/master"
 	"--last --no-merges --no-patch"
 	"--func=in_array --no-renames"
-	"--pickaxe git_track_map_aliases --last --no-patch"
-	"--range 954829d 67bfd35 --no-patch"
+	"--pickaxe=git_track_map_aliases --last --no-patch"
+	"--range 954829d,67bfd35 --no-patch"
 	"--branch origin/master --last --no-merges"
+	"--last=3 --lines=20,35 --no-merges --no-renames"
 )
 
 for OPTIONS in "${TESTS[@]}"; do
