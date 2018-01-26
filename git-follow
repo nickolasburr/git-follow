@@ -142,7 +142,7 @@ my %dispatch = (
 	'first|f'          => $dispatch{"set_apt_opt"},
 	'func|F=s{1,1}'    => $dispatch{"set_apt_opt"},
 	'last|l=i{0,1}'    => $dispatch{"set_apt_opt"},
-	'lines|L=i@{1,2}'  => $dispatch{"set_apt_opt"},
+	'lines|L=s{1,1}'   => $dispatch{"set_apt_opt"},
 	'no-merges|M'      => $dispatch{"set_unary_opt"},
 	'no-patch|N'       => $dispatch{"set_unary_opt"},
 	'no-renames|O'     => $dispatch{"set_unary_opt"},
@@ -159,7 +159,7 @@ my %dispatch = (
 $refspec = "HEAD" unless defined $refspec;
 
 # In the event of a range, split the range at ".." delimiter.
-@refs = split /\.\./, $refspec;
+@refs = split /\.{2}/, $refspec;
 
 # When --range was given with <start> and <end> values.
 if (@refs) {
