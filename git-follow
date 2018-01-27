@@ -182,7 +182,7 @@ __END__
 
 =head1 NAME
 
-	git-follow - Follow lifetime changes of a pathspec in Git
+	git-follow - Follow lifetime changes of a pathspec in Git.
 
 =head1 VERSION
 
@@ -192,23 +192,23 @@ __END__
 
 	Follow lifetime changes of a pathspec in Git. git-follow(1) makes analyzing changes of a pathspec trivial with robust options and simplified log output.
 
-=head1 ENVIRONMENT
+=head1 CONFIGURATION
 
-	Configuration values set via git-config(1) can be used to customize the behavior of git-follow. The following configurations are honored:
+	Configuration values set via git-config(1) can be used to customize the behavior of git-follow.
 
 	follow.diff.mode
-		Diff mode. Defaults to inline. See --word-diff, --color-words, et al. of git-log(1) for syntax.
+		Diff mode. Choices include inline, sxs, and colorsxs. See --word-diff, --color-words, et al. of git-log(1).
 
 	follow.log.format
 		Log format. See --format of git-log(1) for syntax.
 
 	follow.pager.disable
-		Disable pager. Defaults to false. Set to true to disable pager. Has equivalent effect of 'git --no-pager follow ...'. See --no-pager of git(1).
+		Disable pager. Defaults to false. Set to true to disable pager. See --no-pager of git(1).
 
 =head1 OPTIONS
 
 	--branch, -b <branchref>
-		Show commits for pathspec, specific to a branch.
+		Show commits specific to a branch.
 
 	--first, -f
 		Show first commit where Git initiated tracking of pathspec.
@@ -219,8 +219,8 @@ __END__
 	--last, -l [<count>]
 		Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
 
-	--lines, -L <start> [<end>]
-		Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
+	--lines, -L <start>[,<end>]
+		Show commits which affected lines <start> to <end> in pathspec. Omitting <end> defaults to EOF.
 
 	--no-merges, -M
 		Show commits which have a maximum of one parent. See --no-merges of git-log(1).
@@ -237,14 +237,14 @@ __END__
 	--pickaxe, -P <string>
 		Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).
 
-	--range, -r <startref> [<endref>]
-		Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See git-revisions(1).
+	--range, -r <start>[,<end>]
+		Show commits in range <start> to <end>. Omitting <endref> defaults to HEAD. See git-revisions(1).
 
 	--reverse, -R
 		Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
 
 	--tag, -t <tagref>
-		Show commits for pathspec, specific to a tag.
+		Show commits specific to a tag.
 
 	--total, -T
 		Show total number of commits for pathspec.
@@ -276,17 +276,11 @@ __END__
 	Display commits where function `funcname' was affected
 		git follow --func funcname -- archive.c
 
-	Display commits in range fifth ancestor of master to HEAD
-		git follow --range master@{5} -- worktree.c
+	Display commits in range from aa03428 to b354ef9
+		git follow --range aa03428,b354ef9 -- worktree.c
 
-		--OR--
-
-		Same as above (assuming currently checked out branch is master).
-
-		git follow --range 5 -- worktree.c
-
-	Display commits between two days ago and one hour ago
-		git follow --range 'master@{2 days ago}' 'master@{1 hour ago}' -- apply.c
+	Display commits in range from v1.5.3 to v1.5.4
+		git follow --range v1.5.3,v1.5.4 -- apply.c
 
 	Display commits up to tag v1.5.3
 		git follow --tag v1.5.3 -- graph.c
