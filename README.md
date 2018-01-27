@@ -84,7 +84,7 @@ git follow --branch topic -- blame.c
 git follow --first -- branch.c
 ```
 
-**Display last 5 commits which affected `column.c`** (See [`--diff-filter`](https://git-scm.com/docs/git-log#git-log---diff-filterACDMRTUXB82308203) of git-log(1)).
+**Display last 5 commits which affected `column.c`**
 
 ```
 git follow --last 5 -- column.c
@@ -108,13 +108,13 @@ git follow --last 3 --lines 10,15 -- bisect.c
 git follow --func funcname -- archive.c
 ```
 
-**Display commits in range from commit `aa03428` to commit `b354ef9` which affected worktree.c**
+**Display commits in range from commit `aa03428` to commit `b354ef9` which affected `worktree.c`**
 
 ```
 git follow --range aa03428,b354ef9 -- worktree.c
 ```
 
-**Display commits in range from tag `v1.5.3` to tag `v1.5.4` which affected apply.c**
+**Display commits in range from tag `v1.5.3` to tag `v1.5.4` which affected `apply.c`**
 
 ```
 git follow --range v1.5.3,v1.5.4 -- apply.c
