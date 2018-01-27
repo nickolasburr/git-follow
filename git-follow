@@ -126,6 +126,11 @@ my %dispatch = (
 	"show_total"    => sub {
 		&show_total($pathspec);
 	},
+	"show_usage" => sub {
+		print "$USAGE_SYNOPSIS";
+
+		exit 0;
+	},
 	"show_version"  => sub {
 		&show_version();
 	},
@@ -152,6 +157,7 @@ my %dispatch = (
 	'reverse|R'        => $dispatch{"set_unary_opt"},
 	'tag|t=s{1,1}'     => $dispatch{"set_refspec"},
 	'total|T'          => $dispatch{"show_total"},
+	'usage|help|h'     => $dispatch{"show_usage"},
 	'version|V'        => $dispatch{"show_version"},
 ) or &on_error();
 
