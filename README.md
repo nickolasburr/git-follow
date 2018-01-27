@@ -63,6 +63,7 @@ Options can be specified to provide more refined information. If no options are 
 + `--reverse`, `-R`: Show commits in reverse chronological order. See [`--walk-reflogs`](https://git-scm.com/docs/git-log#git-log---walk-reflogs) of git-log(1).
 + `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
 + `--total`, `-T`: Show total number of commits for pathspec.
++ `--usage`, `--help`, `-h`: Show usage information.
 + `--version`, `-V`: Show current version number.
 
 ## Notes
