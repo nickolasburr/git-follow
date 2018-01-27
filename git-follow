@@ -21,7 +21,7 @@ use GitFollow::Core;
 # print the current release version and exit.
 &show_version() if grep { $_ eq "--version" or $_ eq "-V" } @ARGV;
 
-our ($LOG_FMT, $INVALID_PATH_ERR, $INVALID_PATH_WITHIN_RANGE_ERR);
+our ($DEFAULT_LOG_FMT, $INVALID_PATH_ERR, $INVALID_PATH_WITHIN_RANGE_ERR);
 our ($INVALID_REPO_ERR, $INVALID_REPO_HINT);
 my ($pathspec, $refspec, @refs);
 
@@ -61,7 +61,7 @@ if (&has_config("diff", "mode")) {
 }
 
 # follow.log.format configuration.
-$git_log_options{"format"} = sprintf($git_log_options{"format"}, (&has_config("log", "format") ? &get_config("log", "format") : $LOG_FMT));
+$git_log_options{"format"} = sprintf($git_log_options{"format"}, (&has_config("log", "format") ? &get_config("log", "format") : $DEFAULT_LOG_FMT));
 
 # Options and their conflicting counterparts.
 my %copts = (
@@ -155,19 +155,15 @@ my %dispatch = (
 	'version|V'        => $dispatch{"show_version"},
 ) or &on_error();
 
-# Set default refspec if not given explicitly via --branch, --range, or --tag.
+# Set default ref if not given explicitly via --branch, --range, or --tag.
 $refspec = "HEAD" unless defined $refspec;
 
-# In the event of a range, split the range at ".." delimiter.
+# Attempt split at .. range delimiter.
 @refs = split /\.{2}/, $refspec;
 
-# When --range was given with <start> and <end> values.
-if (@refs) {
-	foreach my $ref (@refs) {
-		die sprintf($INVALID_PATH_WITHIN_RANGE_ERR, $pathspec, $refspec) unless &is_pathspec($ref, $pathspec);
-	}
-} else {
-	die sprintf($INVALID_PATH_ERR, $pathspec) unless &is_pathspec($refspec, $pathspec);
+# Verify pathspec is valid given each ref in @refs.
+foreach my $ref (@refs) {
+	die sprintf($INVALID_PATH_WITHIN_RANGE_ERR, $pathspec, $refspec) unless &is_pathspec($ref, $pathspec);
 }
 
 system $git_log{"exec"}, $git_log{"pager_mode"}, $git_log{"command"}, @apts, values %git_log_options, $refspec, "--", $pathspec;
