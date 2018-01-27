@@ -22,7 +22,7 @@ our @EXPORT = qw(
 	set_unary_opt
 	show_total
 	show_version
-	$LOG_FMT
+	$DEFAULT_LOG_FMT
 	$INVALID_PATH_ERR
 	$INVALID_PATH_WITHIN_RANGE_ERR
 	$INVALID_REPO_ERR
@@ -33,13 +33,14 @@ our @EXPORT = qw(
 our %parts = (
 	"hash"  => "%C(bold cyan)%h%Creset",
 	"tree"  => "%C(bold magenta)%t%Creset",
+	"entry" => "%s",
 	"name"  => "%C(bold blue)%an%Creset",
 	"email" => "%C(bold yellow)%ae%Creset",
 	"time"  => "%C(bold green)%cr%Creset",
 );
 
 # Default git-log format.
-our $LOG_FMT = "$parts{'hash'} ($parts{'tree'}) - %s - $parts{'name'} <$parts{'email'}> [$parts{'time'}]";
+our $DEFAULT_LOG_FMT = "$parts{'hash'} ($parts{'tree'}) - $parts{'entry'} - $parts{'name'} <$parts{'email'}> [$parts{'time'}]";
 
 # Current release version.
 our $GIT_FOLLOW_VERSION = "1.1.4";
@@ -56,8 +57,7 @@ our $GIT_FOLLOW_NO_PAGER   = undef;
 ### User errors, notices, hints, etc.
 ###
 
-our $INVALID_BRANCHREF = "%s is not a valid branch.\n";
-our $INVALID_TAGREF    = "%s is not a valid tag.\n";
+our $INVALID_REFNAME   = "%s is not a valid %s.\n";
 our $INVALID_NUM_ARG   = "%s is not a valid number.\n";
 our $INVALID_REF_COMBO = "Only one --branch or one --tag option can be specified at a time.\n";
 our $INVALID_REPO_ERR  = "%s is not a Git repository.\n";
@@ -142,7 +142,7 @@ sub has_config {
 
 	system("git config follow.$key$qual >/dev/null");
 
-	!$?;
+	!($? >> 8);
 }
 
 # Determine if value is an integer.
@@ -179,7 +179,7 @@ sub get_rev_range {
 	my ($start, $end) = split ',', $range;
 
 	# If no end revision was given, default to HEAD.
-	$end = "HEAD" if not defined $end;
+	$end = "HEAD" unless defined $end;
 
 	return "$start..$end";
 }
@@ -240,7 +240,7 @@ sub set_refspec {
 
 	# If `$refspec` is already defined, notify the user and emit an error,
 	# as options `--branch`, `--range`, and `--tag` are mutually exclusive.
-	die "$INVALID_REF_COMBO" if not length $refspec;
+	die "$INVALID_REF_COMBO" unless length $refspec;
 
 	if ($opt eq "range") {
 		$$refspec = &get_rev_range($ref);
@@ -263,11 +263,7 @@ sub set_refspec {
 		} else {
 			# Otherwise, emit an error specific to
 			# the option given and exit the script.
-			if ($opt eq "branch") {
-				die sprintf($INVALID_BRANCHREF, $ref);
-			} elsif ($opt eq "tag") {
-				die sprintf($INVALID_TAGREF, $ref);
-			}
+			die sprintf($INVALID_REFNAME, $ref, $opt);
 		}
 	}
 }
