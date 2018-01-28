@@ -108,7 +108,7 @@ git follow --last 3 --lines 10,15 -- bisect.c
 git follow --func funcname -- archive.c
 ```
 
-**Display commits in range from commit `aa03428` to commit `b354ef9` which affected `worktree.c`**
+**Display commits in range from `aa03428` to `b354ef9` which affected `worktree.c`**
 
 ```
 git follow --range aa03428,b354ef9 -- worktree.c

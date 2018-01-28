@@ -43,7 +43,7 @@ our %parts = (
 our $DEFAULT_LOG_FMT = "$parts{'hash'} ($parts{'tree'}) - $parts{'entry'} - $parts{'name'} <$parts{'email'}> [$parts{'time'}]";
 
 # Current release version.
-our $GIT_FOLLOW_VERSION = "1.1.4";
+our $GIT_FOLLOW_VERSION = "1.1.5";
 
 ###
 ### Environment variables.
