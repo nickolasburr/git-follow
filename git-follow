@@ -188,7 +188,7 @@ __END__
 
 =head1 VERSION
 
-	version 1.1.4
+	version 1.1.5
 
 =head1 DESCRIPTION
 
@@ -269,11 +269,11 @@ __END__
 	Display last 5 commits
 		git follow --last 5 -- Makefile
 
-	Display last commit where lines 5 through `EOF' were affected
+	Display last commit where lines 5 through EOF were affected
 		git follow --last --lines 5 -- apply.c
 
 	Display last 3 commits where lines 10 through 15 were affected
-		git follow --last 3 --lines 10 15 -- bisect.c
+		git follow --last 3 --lines 10,15 -- bisect.c
 
 	Display commits where function `funcname' was affected
 		git follow --func funcname -- archive.c
