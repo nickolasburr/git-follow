@@ -49,7 +49,7 @@ Configuration values set via git-config(1) can be used to customize the behavior
 
 Options can be specified to provide more refined information. If no options are given, all applicable commits will be shown.
 
-+ `--branch`, `-b` `<branchref>`: Show commits specific to a branch.
++ `--branch`, `-b` `<branch>`: Show commits specific to a branch.
 + `--first`, `-f`: Show first commit where Git initiated tracking of pathspec.
 + `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1).
 + `--last`, `-l` `[<count>]`: Show last `<count>` commits where pathspec was affected. Omitting `<count>` defaults to last commit.
@@ -61,7 +61,7 @@ Options can be specified to provide more refined information. If no options are 
 + `--pickaxe`, `-P` `<string>`: Show commits which change the number of occurrences of `<string>` in pathspec. See [`-S`](https://git-scm.com/docs/git-log#git-log--Sltstringgt) of git-log(1).
 + `--range`, `-r` `<start>[,<end>]`: Show commits in range `<start>` to `<end>`. Omitting `<end>` defaults to `HEAD`. See gitrevisions(1).
 + `--reverse`, `-R`: Show commits in reverse chronological order. See [`--walk-reflogs`](https://git-scm.com/docs/git-log#git-log---walk-reflogs) of git-log(1).
-+ `--tag`, `-t` `<tagref>`: Show commits specific to a tag.
++ `--tag`, `-t` `<tag>`: Show commits specific to a tag.
 + `--total`, `-T`: Show total number of commits for pathspec.
 + `--usage`, `--help`, `-h`: Show usage information.
 + `--version`, `-V`: Show current version number.
