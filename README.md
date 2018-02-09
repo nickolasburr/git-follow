@@ -135,3 +135,5 @@ git follow --total -- rebase.c
 ## See Also
 
 [git(1)](https://git-scm.com/docs/git), [git-branch(1)](https://git-scm.com/docs/git-branch), [git-check-ref-format(1)](https://git-scm.com/docs/git-check-ref-format), [git-config(1)](https://git-scm.com/docs/git-config), [git-diff(1)](https://git-scm.com/docs/git-diff), [git-log(1)](https://git-scm.com/docs/git-log), [git-remote(1)](https://git-scm.com/docs/git-remote), [gitrevisions(1)](https://git-scm.com/docs/gitrevisions), [git-tag(1)](https://git-scm.com/docs/git-tag)
+
+[![Analytics](https://ga-beacon.appspot.com/UA-113897119-1/git-follow/README.md?pixel)](https://github.com/igrigorik/ga-beacon)
