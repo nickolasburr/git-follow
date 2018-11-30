@@ -49,22 +49,22 @@ Configuration values set via git-config(1) can be used to customize the behavior
 
 Options can be specified to provide more refined information. If no options are given, all applicable commits will be shown.
 
-+ `--branch`, `-b` `<branch>`: Show commits specific to a branch.
-+ `--first`, `-f`: Show first commit where Git initiated tracking of pathspec.
-+ `--func`, `-F` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1).
-+ `--last`, `-l` `[<count>]`: Show last `<count>` commits which affect pathspec. Omit `<count>` defaults to last commit.
-+ `--lines`, `-L` `<start>[,<end>]`: Show commits which affect lines `<start>` to `<end>`. Omit `<end>` defaults to `EOF`.
-+ `--no-merges`, `-M`: Show commits which have a maximum of one parent. See [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges) of git-log(1).
-+ `--no-patch`, `-N`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1).
-+ `--no-renames`, `-O`: Disable rename detection. See [`--no-renames`](https://git-scm.com/docs/git-log#git-log---no-renames) of git-log(1).
-+ `--pager`, `-p`: Force pager when invoking git-log(1). Overrides `follow.pager.disable` config value.
-+ `--pickaxe`, `-P` `<string>`: Show commits which change the # of occurrences of `<string>`. See [`-S`](https://git-scm.com/docs/git-log#git-log--Sltstringgt) of git-log(1).
-+ `--range`, `-r` `<start>[,<end>]`: Show commits in range `<start>` to `<end>`. Omit `<end>` defaults to `HEAD`.
-+ `--reverse`, `-R`: Show commits in reverse chronological order. See [`--walk-reflogs`](https://git-scm.com/docs/git-log#git-log---walk-reflogs) of git-log(1).
-+ `--tag`, `-t` `<tag>`: Show commits specific to a tag.
-+ `--total`, `-T`: Show total number of commits for pathspec.
-+ `--usage`, `--help`, `-h`: Show usage information.
-+ `--version`, `-V`: Show current version number.
++ `-b`, `--branch` `<branch>`: Show commits specific to a branch.
++ `-f`, `--first`: Show first commit where Git initiated tracking of pathspec.
++ `-F`, `--func` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1).
++ `-l`, `--last` `[<count>]`: Show last `<count>` commits which affect pathspec. Omit `<count>` defaults to last commit.
++ `-L`, `--lines` `<start>[,<end>]`: Show commits which affect lines `<start>` to `<end>`. Omit `<end>` defaults to `EOF`.
++ `-M`, `--no-merges`: Show commits which have a maximum of one parent. See [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges) of git-log(1).
++ `-N`, `--no-patch`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1).
++ `-O`, `--no-renames`: Disable rename detection. See [`--no-renames`](https://git-scm.com/docs/git-log#git-log---no-renames) of git-log(1).
++ `-p`, `--pager`: Force pager when invoking git-log(1). Overrides `follow.pager.disable` config value.
++ `-P`, `--pickaxe` `<string>`: Show commits which change the # of occurrences of `<string>`. See [`-S`](https://git-scm.com/docs/git-log#git-log--Sltstringgt) of git-log(1).
++ `-r`, `--range` `<start>[,<end>]`: Show commits in range `<start>` to `<end>`. Omit `<end>` defaults to `HEAD`.
++ `-R`, `--reverse`: Show commits in reverse chronological order. See [`--walk-reflogs`](https://git-scm.com/docs/git-log#git-log---walk-reflogs) of git-log(1).
++ `-t`, `--tag` `<tag>`: Show commits specific to a tag.
++ `-T`, `--total`: Show total number of commits for pathspec.
++ `-h`, `--help`, `--usage`: Show usage information.
++ `-V`, `--version`: Show current version number.
 
 ## Notes
 
