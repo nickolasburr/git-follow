@@ -49,11 +49,11 @@ Configuration values set via git-config(1) can be used to customize the behavior
 
 Options can be specified to provide more refined information. If no options are given, all applicable commits will be shown.
 
-+ `-b`, `--branch` `<branch>`: Show commits specific to a branch.
++ `-b`, `--branch` `<branch>`: Show commits for `<branch>`.
 + `-f`, `--first`: Show first commit where Git initiated tracking of pathspec.
-+ `-F`, `--func` `<funcname>`: Show commits which affected function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1).
-+ `-l`, `--last` `[<count>]`: Show last `<count>` commits which affect pathspec. Omit `<count>` defaults to last commit.
-+ `-L`, `--lines` `<start>[,<end>]`: Show commits which affect lines `<start>` to `<end>`. Omit `<end>` defaults to `EOF`.
++ `-F`, `--func` `<funcname>`: Show commits for function `<funcname>` in pathspec. See [`-L`](https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt) of git-log(1).
++ `-l`, `--last` `[<count>]`: Show last `<count>` commits for pathspec. Omit `<count>` defaults to last commit.
++ `-L`, `--lines` `<start>[,<end>]`: Show commits for lines `<start>` to `<end>`. Omit `<end>` defaults to `EOF`.
 + `-M`, `--no-merges`: Show commits which have a maximum of one parent. See [`--no-merges`](https://git-scm.com/docs/git-log#git-log---no-merges) of git-log(1).
 + `-N`, `--no-patch`: Suppress diff output. See [`--no-patch`](https://git-scm.com/docs/git-log#git-log---no-patch) of git-log(1).
 + `-O`, `--no-renames`: Disable rename detection. See [`--no-renames`](https://git-scm.com/docs/git-log#git-log---no-renames) of git-log(1).
