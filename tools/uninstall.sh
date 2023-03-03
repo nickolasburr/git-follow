@@ -1,29 +1,24 @@
 #!/usr/bin/env bash
-
 set -ex
 
 PREFIX="$1"
 
 if [[ ! -d "$PREFIX" ]]; then
 	printf '%s is not a valid directory.\n' "$PREFIX"
-
 	exit 1
 fi
 
 TARGET="git-follow"
 
 BINDIR="$PREFIX/bin"
-ETCDIR="$PREFIX/etc"
-MDLDIR="$ETCDIR/$TARGET"
+OPTDIR="$PREFIX/opt"
+MDLDIR="$OPTDIR/$TARGET"
 
 MANPAGE="$TARGET.1.gz"
 MANDEST="$PREFIX/share/man/man1"
 
 RM="rm"
-RMFLAGS="-rf"
+RMOPTS="-rf"
 
-eval "$RM $RMFLAGS $BINDIR/$TARGET $MANDEST/$MANPAGE"
-
-if [[ -d "$MDLDIR" ]]; then
-	eval "$RM $RMFLAGS $MDLDIR"
-fi
+eval "$RM $RMOPTS $BINDIR/$TARGET $MANDEST/$MANPAGE"
+[[ -d "$MDLDIR" ]] && eval "$RM $RMOPTS $MDLDIR"

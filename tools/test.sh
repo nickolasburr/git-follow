@@ -8,18 +8,18 @@ if [[ -n "$CDPATH" ]]; then
 	unset CDPATH
 fi
 
-cd ..
+builtin cd ..
 
 TARGET="git-follow"
-MDLDIR="/usr/local/etc/git-follow/src"
+MDLDIR="/usr/local/opt/git-follow/src"
 SRCDIR="src"
 
 SED="/usr/bin/sed"
 SEDOPTS="-i ''"
-SEDMATCH="s@$MDLDIR@$SRCDIR@g"
+SEDEXPR="s@$MDLDIR@$SRCDIR@g"
 
 # Update 'use lib' directive to 'src' for testing purposes.
-eval "$SED $SEDOPTS $SEDMATCH $TARGET"
+eval "$SED $SEDOPTS $SEDEXPR $TARGET"
 
 ERROR=0
 TESTS=(
@@ -50,16 +50,13 @@ for OPTIONS in "${TESTS[@]}"; do
 		printf 'OK ./%s %s -- %s\n' "$TARGET" "$OPTIONS" "$TARGET"
 	else
 		printf 'ERROR ./%s %s -- %s\n' "$TARGET" "$OPTIONS" "$TARGET"
-
 		ERROR=1
-
 		break
 	fi
 done
 
-SEDMATCH="s@$SRCDIR@$MDLDIR@g"
+SEDEXPR="s@$SRCDIR@$MDLDIR@g"
 
 # Reset 'use lib' directive to original path.
-eval "$SED $SEDOPTS $SEDMATCH $TARGET"
-
+eval "$SED $SEDOPTS $SEDEXPR $TARGET"
 exit $ERROR
