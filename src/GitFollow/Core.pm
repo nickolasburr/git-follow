@@ -3,25 +3,21 @@
 ###
 ### Copyright (C) 2017 Nickolas Burr <nickolasburr@gmail.com>
 ###
-
 package GitFollow::Core;
+
 use 5.008;
 use strict;
 use warnings;
 use Exporter qw(import);
+use GitFollow::Environment qw($GIT_PATH);
 
 our @EXPORT = qw(
-	get_config
 	get_format_apt
-	has_config
-	is_pathspec
-	is_repo
 	on_error
 	rm_copts
 	set_refspec
 	set_unary_opt
 	show_total
-	show_version
 	$DEFAULT_LOG_FMT
 	$INVALID_PATH_ERR
 	$INVALID_PATH_WITHIN_RANGE_ERR
@@ -39,11 +35,8 @@ our %parts = (
 	"time"  => "%C(bold green)%cr%Creset",
 );
 
-# Default git-log format.
+# Default git-log(1) format.
 our $DEFAULT_LOG_FMT = "$parts{'hash'} ($parts{'tree'}) - $parts{'entry'} - $parts{'name'} <$parts{'email'}> [$parts{'time'}]";
-
-# Current release version.
-our $GIT_FOLLOW_VERSION = "1.1.5";
 
 ###
 ### Environment variables.
@@ -64,27 +57,27 @@ our $INVALID_REPO_ERR  = "%s is not a Git repository.\n";
 our $INVALID_REPO_HINT = "FYI: If you don't want to change directories, you can run 'git -C /path/to/repository follow ...'\n";
 our $INVALID_PATH_ERR  = "%s is not a valid pathspec.\n";
 our $INVALID_PATH_WITHIN_RANGE_ERR = "%s is not a valid pathspec within range %s.\n";
-our $USAGE_SYNOPSIS    = <<"END_USAGE_SYNOPSIS";
+our $USAGE_SYNOPSIS = <<"END_USAGE_SYNOPSIS";
 
-  Usage: git follow [OPTIONS] [--] pathspec
+  Usage: git follow [OPTIONS] [--] <pathspec>
 
   Options:
 
-    --branch,     -b <branchref>             Show commits for pathspec, specific to a branch.
-    --first,      -f                         Show first commit where Git initiated tracking of pathspec.
-    --func,       -F <funcname>              Show commits which affected function <funcname> in pathspec.
-    --last,       -l [<count>]               Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
-    --lines,      -L <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
-    --no-merges,  -M                         Show commits which have a maximum of one parent. See --no-merges of git-log(1).
-    --no-patch,   -N                         Suppress diff output. See --no-patch of git-log(1).
-    --no-renames, -O                         Disable rename detection. See --no-renames of git-log(1).
-    --pager,      -p                         Force pager when invoking git-log(1). Overrides follow.pager.disable config value.
-    --pickaxe,    -P <string>                Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).
-    --range,      -r <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
-    --reverse,    -R                         Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
-    --tag,        -t <tagref>                Show commits for pathspec, specific to a tag.
-    --total,      -T                         Show total number of commits for pathspec.
-    --version,    -V                         Show current release version.
+    -b, --branch <branchref>            Show commits for pathspec, specific to a branch.
+    -f, --first                         Show first commit where Git initiated tracking of pathspec.
+    -F, --func <funcname>               Show commits which affected function <funcname> in pathspec.
+    -l, --last [<count>]                Show last <count> commits which affected pathspec. Omitting <count> defaults to last commit.
+    -L, --lines <start> [<end>]         Show commits which affected lines <start> through <end> in pathspec. Omitting <end> defaults to EOF.
+    -M, --no-merges                     Show commits which have a maximum of one parent. See --no-merges of git-log(1).
+    -N, --no-patch                      Suppress diff output. See --no-patch of git-log(1).
+    -O, --no-renames                    Disable rename detection. See --no-renames of git-log(1).
+    -p, --pager                         Force pager when invoking git-log(1). Overrides follow.pager.disable config value.
+    -P, --pickaxe <string>              Show commits which change the number of occurrences of <string> in pathspec. See -S of git-log(1).
+    -r, --range <startref> [<endref>]   Show commits in range <startref> to <endref> which affected pathspec. Omitting <endref> defaults to HEAD. See gitrevisions(1).
+    -R, --reverse                       Show commits in reverse chronological order. See --walk-reflogs of git-log(1).
+    -t, --tag <tagref>                  Show commits for pathspec, specific to a tag.
+    -T, --total                         Show total number of commits for pathspec.
+    -V, --version                       Show current release version.
 
 END_USAGE_SYNOPSIS
 
@@ -94,55 +87,17 @@ END_USAGE_SYNOPSIS
 
 sub get_format_apt;
 sub get_rev_range;
-sub get_config;
-sub has_config;
 sub is_int;
-sub is_pathspec;
-sub is_repo;
 sub on_error;
 sub rm_copts;
 sub set_refspec;
 sub set_unary_opt;
 sub show_total;
-sub show_version;
 
 # Display usage information, and exit failure.
 sub on_error {
 	print "$USAGE_SYNOPSIS";
-
 	exit 1;
-}
-
-# Get git-config value.
-sub get_config {
-	my ($key, $qual) = @_;
-	my $config = undef;
-
-	system("git config follow.$key.$qual >/dev/null");
-
-	$config = (!$?)
-	        ? `git config follow.$key.$qual`
-	        : `git config follow.$key$qual`;
-
-	# Strip trailing newline from config value.
-	chomp $config;
-
-	return $config;
-}
-
-# Check if git-config key exists.
-sub has_config {
-	my ($key, $qual) = @_;
-
-	system("git config follow.$key.$qual >/dev/null");
-
-	if (!$?) {
-		return 1;
-	}
-
-	system("git config follow.$key$qual >/dev/null");
-
-	!($? >> 8);
 }
 
 # Determine if value is an integer.
@@ -156,23 +111,6 @@ sub is_int {
 	}
 }
 
-# Determine if pathspec is a valid file object.
-sub is_pathspec {
-	my ($refspec, $pathspec) = @_;
-
-	# Validate pathspec via git-cat-file.
-	system("git cat-file -e $refspec:$pathspec &>/dev/null");
-
-	!($? >> 8);
-}
-
-# Determine if we're inside a Git repository.
-sub is_repo {
-	system("git rev-parse --is-inside-work-tree &>/dev/null");
-
-	!($? >> 8);
-}
-
 # Get revision range via start and end boundaries.
 sub get_rev_range {
 	my $range = shift;
@@ -180,7 +118,6 @@ sub get_rev_range {
 
 	# If no end revision was given, default to HEAD.
 	$end = "HEAD" unless defined $end;
-
 	return "$start..$end";
 }
 
@@ -193,7 +130,6 @@ sub get_format_apt {
 		return "--diff-filter=A";
 	} elsif ($opt eq "func") {
 		my $funcname = shift @args;
-
 		return "-L:$funcname:$pathspec";
 	} elsif ($opt eq "last") {
 		my $num = shift @args;
@@ -203,7 +139,6 @@ sub get_format_apt {
 		}
 
 		die sprintf($INVALID_NUM_ARG, $num) unless &is_int($num);
-
 		return "--max-count=$num";
 	} elsif ($opt eq "lines") {
 		my $lines = shift @args;
@@ -216,7 +151,6 @@ sub get_format_apt {
 		}
 	} elsif ($opt eq "pickaxe") {
 		my $subject = shift @args;
-
 		return "-S$subject";
 	} else {
 		return "--$opt";
@@ -245,8 +179,8 @@ sub set_refspec {
 	if ($opt eq "range") {
 		$$refspec = &get_rev_range($ref);
 	} else {
-		my $refs = `git $opt --list`;
-		my $remotes = `git branch -r` if $opt eq "branch";
+		my $refs = `$GIT_PATH $opt --list`;
+		my $remotes = `$GIT_PATH branch -r` if $opt eq "branch";
 		$refs = $refs . $remotes if defined $remotes;
 
 		# Filter asterisk, escape codes from `git {branch,tag} --list`.
@@ -274,27 +208,18 @@ sub show_total {
 
 	# Whether to use rename detection or stop at renames.
 	my $fopt = (grep { $_ eq "--no-renames" || $_ eq "-O" } @ARGV)
-	         ? "--no-renames"
-	         : "--follow";
+	    ? "--no-renames" : "--follow";
 
 	# Use pathspec, if defined. Otherwise,
 	# get the last element in @ARGV array.
 	my $path = (defined $pathspec)
-	         ? $pathspec
-	         : $ARGV[$#ARGV];
+	         ? $pathspec : $ARGV[$#ARGV];
 
 	# Array of abbreviated commit hashes.
-	my @hashes = `git log $fopt --format=\"%h\" -- $path`;
+	my @hashes = `$GIT_PATH log $fopt --format=\"%h\" -- $path`;
 
 	print scalar @hashes;
 	print "\n";
-
-	exit 0;
-}
-
-# Show current release version.
-sub show_version {
-	print "$GIT_FOLLOW_VERSION\n";
 
 	exit 0;
 }
