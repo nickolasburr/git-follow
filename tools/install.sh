@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-
 set -ex
 
 PREFIX="$1"
 
 if [[ ! -d "$PREFIX" ]]; then
 	printf '%s is not a valid directory.\n' "$PREFIX"
-
 	exit 1
 fi
 
@@ -16,8 +14,8 @@ SRCDIR="src"
 DEFDIR="/usr/local"
 
 BINDIR="$PREFIX/bin"
-ETCDIR="$PREFIX/etc"
-MDLDIR="$ETCDIR/$TARGET"
+OPTDIR="$PREFIX/opt"
+MDLDIR="$OPTDIR/$TARGET"
 MDLSRC="$MDLDIR/$SRCDIR"
 
 MANPAGE="$TARGET.1.gz"
@@ -29,24 +27,23 @@ OPTIONS="-c"
 CP="/bin/cp"
 CPOPTS="-rf"
 
+MKDIR="/bin/mkdir"
+MKDIROPTS="-p"
+
 RM="/bin/rm"
 RMOPTS="-rf"
 
 SED="/usr/bin/sed"
 SEDOPTS="-i ''"
-SEDMATCH="s@$DEFDIR@$PREFIX@g"
+SEDEXPR="s@$DEFDIR@$PREFIX@g"
 
-cd ..
-cp "$MANDIR/$MANPAGE" "$MANDEST/$MANPAGE"
+builtin cd ..
+eval "$CP $MANDIR/$MANPAGE $MANDEST/$MANPAGE"
 
 # Set absolute path for 'use lib' directive.
-eval "$SED $SEDOPTS $SEDMATCH $TARGET"
+eval "$SED $SEDOPTS $SEDEXPR $TARGET"
 eval "$INSTALL $OPTIONS $TARGET $BINDIR/$TARGET"
+[[ -d "$MDLDIR" ]] && eval "$RM $RMOPTS $MDLDIR"
 
-if [[ -d "$MDLDIR" ]]; then
-	eval "$RM $RMOPTS $MDLDIR"
-fi
-
-mkdir -p "$MDLDIR"
-
+eval "$MKDIR $MKDIROPTS $MDLDIR"
 eval "$CP $CPOPTS $SRCDIR $MDLSRC"
