@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 
-our @EXPORT = qw(
+our @EXPORT_OK = qw(
 	$GIT_PATH
 );
 

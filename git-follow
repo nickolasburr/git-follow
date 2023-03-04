@@ -16,12 +16,28 @@ use Getopt::Long qw(
 	Configure
 	GetOptions
 );
-use GitFollow::Core;
+use GitFollow::Cli::OptionsNormalizer qw(
+	format
+	normalize
+);
 use GitFollow::Config qw(
 	get_config
 	has_config
 );
-use GitFollow::Metadata qw(print_version);
+use GitFollow::Log qw(
+	print_total
+	set_refspec
+	$DEFAULT_LOG_FMT
+	$INVALID_PATH_ERR
+	$INVALID_PATH_WITHIN_RANGE_ERR
+	$INVALID_REPO_ERR
+	$INVALID_REPO_HINT
+);
+use GitFollow::Environment qw($GIT_PATH);
+use GitFollow::Metadata qw(
+	print_usage
+	print_version
+);
 use GitFollow::Repository::ObjectUtils qw(
 	is_object
 	is_repo
@@ -29,11 +45,13 @@ use GitFollow::Repository::ObjectUtils qw(
 
 # If --version (or -V) was given as an option,
 # print the current release version and exit.
-&print_version() if grep { $_ eq "--version" or $_ eq "-V" } @ARGV;
+print_version() if grep { $_ eq "--version" or $_ eq "-V" } @ARGV;
 
-our ($DEFAULT_LOG_FMT, $INVALID_PATH_ERR, $INVALID_PATH_WITHIN_RANGE_ERR);
-our ($INVALID_REPO_ERR, $INVALID_REPO_HINT);
-my ($pathspec, $refspec, @refs);
+# If git-follow was executed without arguments,
+# print usage information and exit.
+print_usage() unless @ARGV;
+
+my ($pathspec, $refspec, @refs) = undef;
 
 # Diff modes and their git-log(1) option counterparts.
 my %diffopts = (
@@ -43,12 +61,11 @@ my %diffopts = (
 );
 
 my %git_log = (
-	"exec"       => "/usr/bin/git",
 	"pager_mode" => "--paginate",
 	"command"    => "log",
 );
 
-my %git_log_options = (
+my %git_log_opts = (
 	"diff"   => "--word-diff=%s",
 	"m"      => "-m",
 	"follow" => "--follow",
@@ -58,111 +75,89 @@ my %git_log_options = (
 );
 
 # follow.pager.disable configuration. Replace --paginate with --no-pager if set to true.
-$git_log{"pager_mode"} = "--no-pager" if &has_config("pager", "disable") and &get_config("pager", "disable") eq "true";
+$git_log{"pager_mode"} = "--no-pager" if has_config("pager", "disable") and get_config("pager", "disable") eq "true";
 
 # follow.diff.mode configuration.
-if (&has_config("diff", "mode")) {
-	my $diffmode = &get_config("diff", "mode");
+if (has_config("diff", "mode")) {
+	my $diffmode = get_config("diff", "mode");
 
 	die sprintf("Invalid value '%s' specified for follow.diff.mode\n", $diffmode) unless grep { $_ eq $diffmode } keys %diffopts;
 
 	# Set corresponding --word-diff config value.
-	$git_log_options{"diff"} = sprintf($git_log_options{"diff"}, $diffopts{$diffmode});
+	$git_log_opts{"diff"} = sprintf($git_log_opts{"diff"}, $diffopts{$diffmode});
 }
 
 # follow.log.format configuration.
-$git_log_options{"format"} = sprintf($git_log_options{"format"}, (&has_config("log", "format") ? &get_config("log", "format") : $DEFAULT_LOG_FMT));
-
-# Options and their conflicting counterparts.
-my %copts = (
-	"no-merges"  => ["m"],
-	"no-patch"   => ["patch"],
-	"no-renames" => ["follow"],
-	"reverse"    => [
-		"graph",
-		"follow",
-	],
+$git_log_opts{"format"} = sprintf(
+	$git_log_opts{"format"},
+	(has_config("log", "format") ? get_config("log", "format") : $DEFAULT_LOG_FMT)
 );
 
-# Default argument values for options that accept arguments.
-my %dargs = (
-	"last"  => 1,
-	"lines" => 1,
-);
-
-die "$USAGE_SYNOPSIS" unless @ARGV;
+print_usage() unless @ARGV;
 
 # Validate we're inside a Git repository.
-die sprintf("%s\n%s", sprintf($INVALID_REPO_ERR, getcwd), $INVALID_REPO_HINT) unless &is_repo();
+die sprintf("%s\n%s", sprintf($INVALID_REPO_ERR, getcwd), $INVALID_REPO_HINT) unless is_repo();
 
 $pathspec = ($ARGV[$#ARGV] eq ".")
-          ? &basename(getcwd) : $ARGV[$#ARGV];
+          ? basename(getcwd) : $ARGV[$#ARGV];
 
-# @todo: Utilize $dispatch{"show_total"} instead.
-# ------------------------------------------------
 # If --total (or -T) was given as an option, print
 # total number of revisions for pathspec and exit.
-&show_total($pathspec) if grep { $_ eq "--total" or $_ eq "-T" } @ARGV;
+print_total($pathspec) if grep { $_ eq "--total" or $_ eq "-T" } @ARGV;
 
 my @apts = ();
 my %dispatch = (
 	# Set alias, passthrough options and option arguments.
-	"set_apt_opt"   => sub {
-		push @apts, &get_format_apt(($pathspec, @_));
+	"set_option" => sub {
+		push @apts, &format('log', $pathspec, @_);
 	},
-	"set_pager"     => sub {
+	"set_pager" => sub {
 		$git_log{"pager_mode"} = "--paginate";
 	},
-	"set_refspec"   => sub {
-		&set_refspec((@_, \$refspec));
+	"set_refspec" => sub {
+		set_refspec((@_, \$refspec));
 	},
-	"set_unary_opt" => sub {
+	"set_flag" => sub {
 		my $option = shift;
 
 		# Get formatted git-log(1) option from the unary option given.
-		$git_log_options{$option} = &get_format_apt($pathspec, $option);
-
-		# Remove any conflicting options from %git_log_options.
-		&rm_copts($option, \%copts, \%git_log_options);
+		$git_log_opts{$option} = &format('log', $pathspec, $option);
+		normalize(\%git_log_opts, $option);
 	},
-	"show_total"    => sub {
-		&show_total($pathspec);
+	"print_total" => sub {
+		print_total($pathspec)
 	},
-	"show_usage" => sub {
-		print "$USAGE_SYNOPSIS";
-		exit 0;
-	},
-	"print_version"  => sub {
-		&print_version();
-	},
+	"print_usage" => \&print_usage,
+	"print_version" => \&print_version,
 );
 
-&Configure(
+Configure(
 	"no_auto_abbrev",
 	"no_ignore_case",
 	"require_order",
 );
 
-&GetOptions(
+GetOptions(
 	'branch|b=s{1,1}'  => $dispatch{"set_refspec"},
-	'first|f'          => $dispatch{"set_apt_opt"},
-	'func|F=s{1,1}'    => $dispatch{"set_apt_opt"},
-	'last|l=i{0,1}'    => $dispatch{"set_apt_opt"},
-	'lines|L=s{1,1}'   => $dispatch{"set_apt_opt"},
-	'no-merges|M'      => $dispatch{"set_unary_opt"},
-	'no-patch|N'       => $dispatch{"set_unary_opt"},
-	'no-renames|O'     => $dispatch{"set_unary_opt"},
+	'first|f'          => $dispatch{"set_option"},
+	'func|F=s{1,1}'    => $dispatch{"set_option"},
+	'last|l=i{0,1}'    => $dispatch{"set_option"},
+	'lines|L=s{1,1}'   => $dispatch{"set_option"},
+	'no-merges|M'      => $dispatch{"set_flag"},
+	'no-patch|N'       => $dispatch{"set_flag"},
+	'no-renames|O'     => $dispatch{"set_flag"},
 	'pager|p'          => $dispatch{"set_pager"},
-	'pickaxe|P=s{1,1}' => $dispatch{"set_apt_opt"},
+	'pickaxe|P=s{1,1}' => $dispatch{"set_option"},
 	'range|r=s{1,1}'   => $dispatch{"set_refspec"},
-	'reverse|R'        => $dispatch{"set_unary_opt"},
+	'reverse|R'        => $dispatch{"set_flag"},
 	'tag|t=s{1,1}'     => $dispatch{"set_refspec"},
-	'total|T'          => $dispatch{"show_total"},
-	'usage|help|h'     => $dispatch{"show_usage"},
+	'total|T'          => $dispatch{"print_total"},
+	'usage|help|h'     => $dispatch{"print_usage"},
 	'version|V'        => $dispatch{"print_version"},
-) or &on_error();
+) or print_usage();
 
-# Set default ref if not given explicitly via --branch, --range, or --tag.
+# Set default ref to HEAD if not given explicitly
+# via option --branch, --range, or --tag.
 $refspec = "HEAD" unless defined $refspec;
 
 # Attempt split at .. range delimiter.
@@ -170,10 +165,10 @@ $refspec = "HEAD" unless defined $refspec;
 
 # Verify pathspec is valid given each ref in @refs.
 foreach my $ref (@refs) {
-	die sprintf($INVALID_PATH_WITHIN_RANGE_ERR, $pathspec, $refspec) unless &is_object($ref, $pathspec);
+	die sprintf($INVALID_PATH_WITHIN_RANGE_ERR, $pathspec, $refspec) unless is_object($ref, $pathspec);
 }
 
-system $git_log{"exec"}, $git_log{"pager_mode"}, $git_log{"command"}, @apts, values %git_log_options, $refspec, "--", $pathspec;
+system $GIT_PATH, $git_log{"pager_mode"}, $git_log{"command"}, @apts, values %git_log_opts, $refspec, "--", $pathspec;
 
 1;
 
