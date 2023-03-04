@@ -11,7 +11,7 @@ use warnings;
 use Exporter qw(import);
 use GitFollow::Environment qw($GIT_PATH);
 
-our @EXPORT = qw(
+our @EXPORT_OK = qw(
 	get_config
 	has_config
 );
