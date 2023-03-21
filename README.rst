@@ -52,8 +52,18 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                         </kbd>
                     </td>
                     <td>
-                        <span>&nbsp;Diff mode. Options are <var>inline</var> (default), <var>sxs</var>, and <var>colorsxs</var>.</span>
-                        <span>&nbsp;See <a href="https://git-scm.com/docs/git-log#git-log---word-diffltmodegt" target="_blank"><var>--word-diff</var></a> of git-log(1).</span>
+                        <div>
+                            <span>Diff mode to use with git-diff(1), git-log(1), etc.</span>
+                        </div>
+                        <div>
+                            <span>Values: <code>inline</code>, <code>sxs</code>, and <code>colorsxs</code>.</span>
+                        </div>
+                        <div>
+                            <span>Default: <code>inline</code></span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---word-diffltmodegt"><var>--word-diff</var></a> of git-log(1).</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -63,8 +73,12 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                         </kbd>
                     </td>
                     <td>
-                        <span>&nbsp;Log format.</span>
-                        <span>&nbsp;See <a href="https://git-scm.com/docs/git-log#git-log---formatltformatgt" target="_blank"><var>--format</var></a> of git-log(1) for syntax.</span>
+                        <div>
+                            <span>Log format to use with git-log(1).</span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---formatltformatgt"><var>--format</var></a> of git-log(1) for syntax.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -74,8 +88,18 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                         </kbd>
                     </td>
                     <td>
-                        <span>&nbsp;Disable pager. Options are <var>true</var> or <var>false</var>. Defaults to <var>false</var>.</span>
-                        <span>&nbsp;See <a href="https://git-scm.com/docs/git#git---no-pager" target="_blank"><var>--no-pager</var></a> of git(1).</span>
+                        <div>
+                            <span>Disable pager used with git-diff(1), git-log(1), etc.</span>
+                        </div>
+                        <div>
+                            <span>Values: <code>true</code>, <code>false</code></span>
+                        </div>
+                        <div>
+                            <span>Default: <code>false</code></span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git#Documentation/git.txt---no-pager"><var>--no-pager</var></a> of git(1).</span>
+                        </div>
                     </td>
                 </tr>
             </tbody>
@@ -120,7 +144,7 @@ Options can be specified to provide more refined information. If no options are 
                     </td>
                     <td>
                         <span>Show commits for function <var>&lt;FUNCNAME&gt;.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt" target="_blank"><var>-L</var></a> of git-log(1).</span>
+                        <span>See <a href="https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt"><var>-L</var></a> of git-log(1).</span>
                     </td>
                 </tr>
                 <tr>
@@ -153,7 +177,7 @@ Options can be specified to provide more refined information. If no options are 
                     </td>
                     <td>
                         <span>Show commits which have a maximum of one parent.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-merges" target="_blank"><var>--no-merges</var></a> of git-log(1).</span>
+                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-merges"><var>--no-merges</var></a> of git-log(1).</span>
                     </td>
                 </tr>
                 <tr>
@@ -164,7 +188,7 @@ Options can be specified to provide more refined information. If no options are 
                     </td>
                     <td>
                         <span>Suppress diff output.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-patch" target="_blank"><var>--no-patch</var></a> of git-log(1).</span>
+                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-patch"><var>--no-patch</var></a> of git-log(1).</span>
                     </td>
                 </tr>
                 <tr>
@@ -175,7 +199,7 @@ Options can be specified to provide more refined information. If no options are 
                     </td>
                     <td>
                         <span>Disable rename detection.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-renames" target="_blank"><var>--no-renames</var></a> of git-log(1).</span>
+                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-renames"><var>--no-renames</var></a> of git-log(1).</span>
                     </td>
                 </tr>
                 <tr>
@@ -197,7 +221,7 @@ Options can be specified to provide more refined information. If no options are 
                     </td>
                     <td>
                         <span>Show commits which change the # of occurrences of <var>&lt;STRING&gt;</var></span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log--Sltstringgt" target="_blank"><var>-S</var></a> of git-log(1).</span>
+                        <span>See <a href="https://git-scm.com/docs/git-log#git-log--Sltstringgt"><var>-S</var></a> of git-log(1).</span>
                     </td>
                 </tr>
                 <tr>
@@ -219,7 +243,7 @@ Options can be specified to provide more refined information. If no options are 
                     </td>
                     <td>
                         <span>Show commits in reverse chronological order.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---walk-reflogs" target="_blank"><var>--walk-reflogs</var></a> of git-log(1).</span>
+                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---walk-reflogs"><var>--walk-reflogs</var></a> of git-log(1).</span>
                     </td>
                 </tr>
                 <tr>
