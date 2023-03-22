@@ -29,7 +29,7 @@ Manual
    make
    make install
 
-By default, files are installed to ``/usr/local``. You can install to an alternate location by passing ``PREFIX`` to ``make install``.
+By default, files are installed to ``/usr/local``. You can install elsewhere by passing ``PREFIX`` to ``make install``.
 
 .. code-block:: sh
 
@@ -61,7 +61,7 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                     </td>
                     <td>
                         <div>
-                            <span>Diff mode to use with git-diff(1), git-log(1), etc.</span>
+                            <span>Diff mode to use with git-diff(1), git-log(1), git-show(1), etc.</span>
                         </div>
                         <div>
                             <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---word-diffltmodegt"><var>--word-diff</var></a> of git-log(1).</span>
@@ -117,7 +117,7 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                     </td>
                     <td>
                         <div>
-                            <span>Disable pager used with git-diff(1), git-log(1), etc.</span>
+                            <span>Disable pager used with git-diff(1), git-log(1), git-show(1), etc.</span>
                         </div>
                         <div>
                             <span>See <a href="https://git-scm.com/docs/git#Documentation/git.txt---no-pager"><var>--no-pager</var></a> of git(1).</span>
@@ -154,11 +154,13 @@ Options can be specified to provide more refined information. If no options are 
                 <tr>
                     <td>
                         <kbd>
-                            <span>-b, --branch <var>&lt;BRANCH&gt;</var></span>
+                            <span>-b, --branch <var>BRANCH</var></span>
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits for <var>&lt;BRANCH&gt;</var></span>
+                        <div>
+                            <span>Show commits for <var>BRANCH</var></span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -168,40 +170,54 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Show first commit where Git initiated tracking of pathspec.</span>
+                        <div>
+                            <span>Show first commit where Git initiated tracking of pathspec.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <kbd>
-                            <span>-F, --func <var>&lt;FUNCNAME&gt;</var></span>
+                            <span>-F, --func <var>FUNCNAME</var></span>
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits for function <var>&lt;FUNCNAME&gt;.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt"><var>-L</var></a> of git-log(1).</span>
+                        <div>
+                            <span>Show commits for function <var>FUNCNAME</var>.</span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt"><var>-L</var></a> of git-log(1).</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <kbd>
-                            <span>-l, --last <var>&lt;COUNT&gt;</var></span>
+                            <span>-l, --last <var>COUNT</var></span>
                         </kbd>
                     </td>
                     <td>
-                        <span>Show last <var>&lt;COUNT&gt;</var> commits for pathspec.</span>
-                        <span>Omit <var>&lt;COUNT&gt;</var> defaults to last commit.</span>
+                        <div>
+                            <span>Show last <var>COUNT</var> commits for pathspec.</span>
+                        </div>
+                        <div>
+                            <span>Omit <var>COUNT</var> defaults to last commit.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <kbd>
-                            <span>-L, --lines <var>&lt;START&gt;[,&lt;END&gt;]</var></span>
+                            <span>-L, --lines <var>X[,Y]</var></span>
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits for lines <var>&lt;START&gt;</var>-<var>&lt;END&gt;</var>.</span>
-                        <span>Omit <var>&lt;END&gt;</var> defaults to <var>EOF</var></span>
+                        <div>
+                            <span>Show commits for lines <var>X</var> through <var>Y</var>.</span>
+                        </div>
+                        <div>
+                            <span>Omit <var>Y</var> defaults to <var>EOF</var>.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -211,8 +227,12 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits which have a maximum of one parent.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-merges"><var>--no-merges</var></a> of git-log(1).</span>
+                        <div>
+                            <span>Show commits which have a maximum of one parent.</span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-merges"><var>--no-merges</var></a> of git-log(1).</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -222,8 +242,12 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Suppress diff output.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-patch"><var>--no-patch</var></a> of git-log(1).</span>
+                        <div>
+                            <span>Suppress diff output.</span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-patch"><var>--no-patch</var></a> of git-log(1).</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -233,8 +257,12 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Disable rename detection.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-renames"><var>--no-renames</var></a> of git-log(1).</span>
+                        <div>
+                            <span>Disable rename detection.</span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-renames"><var>--no-renames</var></a> of git-log(1).</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -244,30 +272,42 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Force pager when invoking git-log(1).</span>
-                        <span>Overrides <var>follow.pager.disable</var> config value.</span>
+                        <div>
+                            <span>Force pager when invoking git-log(1).</span>
+                        </div>
+                        <div>
+                            <span>Overrides <var>follow.pager.disable</var> config value.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <kbd>
-                            <span>-P, --pickaxe <var>&lt;STRING&gt;</var></span>
+                            <span>-P, --pickaxe <var>STRING</var></span>
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits which change the # of occurrences of <var>&lt;STRING&gt;</var></span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log--Sltstringgt"><var>-S</var></a> of git-log(1).</span>
+                        <div>
+                            <span>Show commits which change the # of occurrences of <var>STRING</var></span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#git-log--Sltstringgt"><var>-S</var></a> of git-log(1).</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <kbd>
-                            <span>-r, --range <var>&lt;START&gt;[,&lt;END&gt;]</var></span>
+                            <span>-r, --range <var>X[,Y]</var></span>
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits in range <var>&lt;START&gt;</var>-<var>&lt;END&gt;</var>.</span>
-                        <span>Omit <var>&lt;END&gt;</var> defaults to <var>HEAD</var>.</span>
+                        <div>
+                            <span>Show commits in range <var>X</var> through <var>Y</var>.</span>
+                        </div>
+                        <div>
+                            <span>Omit <var>Y</var> defaults to <var>HEAD</var>.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -277,18 +317,24 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits in reverse chronological order.</span>
-                        <span>See <a href="https://git-scm.com/docs/git-log#git-log---walk-reflogs"><var>--walk-reflogs</var></a> of git-log(1).</span>
+                        <div>
+                            <span>Show commits in reverse chronological order.</span>
+                        </div>
+                        <div>
+                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---walk-reflogs"><var>--walk-reflogs</var></a> of git-log(1).</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <kbd>
-                            <span>-t, --tag <var>&lt;TAG&gt;</var></span>
+                            <span>-t, --tag <var>TAG</var></span>
                         </kbd>
                     </td>
                     <td>
-                        <span>Show commits specific to a tag.</span>
+                        <div>
+                            <span>Show commits specific to tag <var>TAG</var>.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -298,7 +344,9 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Show total number of commits for pathspec.</span>
+                        <div>
+                            <span>Show total number of commits for pathspec.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -308,7 +356,9 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Show usage information.</span>
+                        <div>
+                            <span>Show usage information.</span>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -318,7 +368,9 @@ Options can be specified to provide more refined information. If no options are 
                         </kbd>
                     </td>
                     <td>
-                        <span>Show current version number.</span>
+                        <div>
+                            <span>Show current version number.</span>
+                        </div>
                     </td>
                 </tr>
             </tbody>
