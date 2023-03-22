@@ -288,10 +288,10 @@ Options can be specified to provide more refined information. If no options are 
                     </td>
                     <td>
                         <div>
-                            <span>Show commits which change the # of occurrences of <var>STRING</var></span>
+                            <span>Show commits which change the frequency of <var>STRING</var> in revision history.</span>
                         </div>
                         <div>
-                            <span>See <a href="https://git-scm.com/docs/git-log#git-log--Sltstringgt"><var>-S</var></a> of git-log(1).</span>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt--Sltstringgt"><var>-S</var></a> of git-log(1).</span>
                         </div>
                     </td>
                 </tr>
