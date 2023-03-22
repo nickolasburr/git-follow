@@ -44,6 +44,14 @@ git-config(1) settings can be used to customize the behavior of git-follow.
 
    <blockquote>
         <table frame="void" rules="none">
+            <thead>
+                <tr>
+                    <th>Configuration</th>
+                    <th>Description</th>
+                    <th>Settings</th>
+                    <th>Default</th>
+                </tr>
+            </thead>
             <tbody valign="top">
                 <tr>
                     <td>
@@ -56,13 +64,23 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                             <span>Diff mode to use with git-diff(1), git-log(1), etc.</span>
                         </div>
                         <div>
-                            <span>Values: <code>inline</code>, <code>sxs</code>, and <code>colorsxs</code>.</span>
-                        </div>
-                        <div>
-                            <span>Default: <code>inline</code></span>
-                        </div>
-                        <div>
                             <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---word-diffltmodegt"><var>--word-diff</var></a> of git-log(1).</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <code>inline</code>
+                        </div>
+                        <div>
+                            <code>sxs</code>
+                        </div>
+                        <div>
+                            <code>colorsxs</code>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <code>inline</code>
                         </div>
                     </td>
                 </tr>
@@ -80,6 +98,16 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                             <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---formatltformatgt"><var>--format</var></a> of git-log(1) for syntax.</span>
                         </div>
                     </td>
+                    <td>
+                        <div>
+                            <span>-</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <span>-</span>
+                        </div>
+                    </td>
                 </tr>
                 <tr>
                     <td>
@@ -92,13 +120,20 @@ git-config(1) settings can be used to customize the behavior of git-follow.
                             <span>Disable pager used with git-diff(1), git-log(1), etc.</span>
                         </div>
                         <div>
-                            <span>Values: <code>true</code>, <code>false</code></span>
-                        </div>
-                        <div>
-                            <span>Default: <code>false</code></span>
-                        </div>
-                        <div>
                             <span>See <a href="https://git-scm.com/docs/git#Documentation/git.txt---no-pager"><var>--no-pager</var></a> of git(1).</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <code>true</code>
+                        </div>
+                        <div>
+                            <code>false</code>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <code>false</code>
                         </div>
                     </td>
                 </tr>
