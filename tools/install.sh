@@ -34,7 +34,7 @@ RM="/bin/rm"
 RMOPTS="-rf"
 
 SED="/usr/bin/sed"
-SEDOPTS="-i ''"
+SEDOPTS="-i''"
 SEDEXPR="s@$DEFDIR@$PREFIX@g"
 
 builtin cd ..
