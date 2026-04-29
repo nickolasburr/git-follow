@@ -186,7 +186,7 @@ Options can be specified to provide more refined information. If no options are 
                             <span>Show commits for function <var>FUNCNAME</var>.</span>
                         </div>
                         <div>
-                            <span>See <a href="https://git-scm.com/docs/git-log#git-log--Lltfuncnamegtltfilegt"><var>-L</var></a> of git-log(1).</span>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt--Lfuncnamefile"><var>-L</var></a> of git-log(1).</span>
                         </div>
                     </td>
                 </tr>
@@ -231,7 +231,7 @@ Options can be specified to provide more refined information. If no options are 
                             <span>Show commits which have a maximum of one parent.</span>
                         </div>
                         <div>
-                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-merges"><var>--no-merges</var></a> of git-log(1).</span>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---no-merges"><var>--no-merges</var></a> of git-log(1).</span>
                         </div>
                     </td>
                 </tr>
@@ -246,7 +246,7 @@ Options can be specified to provide more refined information. If no options are 
                             <span>Suppress diff output.</span>
                         </div>
                         <div>
-                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-patch"><var>--no-patch</var></a> of git-log(1).</span>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---no-patch"><var>--no-patch</var></a> of git-log(1).</span>
                         </div>
                     </td>
                 </tr>
@@ -261,7 +261,7 @@ Options can be specified to provide more refined information. If no options are 
                             <span>Disable rename detection.</span>
                         </div>
                         <div>
-                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---no-renames"><var>--no-renames</var></a> of git-log(1).</span>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---no-renames"><var>--no-renames</var></a> of git-log(1).</span>
                         </div>
                     </td>
                 </tr>
@@ -321,7 +321,7 @@ Options can be specified to provide more refined information. If no options are 
                             <span>Show commits in reverse chronological order.</span>
                         </div>
                         <div>
-                            <span>See <a href="https://git-scm.com/docs/git-log#git-log---walk-reflogs"><var>--walk-reflogs</var></a> of git-log(1).</span>
+                            <span>See <a href="https://git-scm.com/docs/git-log#Documentation/git-log.txt---walk-reflogs"><var>--walk-reflogs</var></a> of git-log(1).</span>
                         </div>
                     </td>
                 </tr>
