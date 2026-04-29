@@ -10,7 +10,6 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use GitFollow::Log qw(parse_opts);
-use GitFollow::Stdlib::NumberUtils qw(is_numeric);
 
 our @EXPORT_OK = qw(
 	format

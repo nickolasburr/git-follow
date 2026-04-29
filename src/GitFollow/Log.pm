@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use GitFollow::Environment qw($GIT_PATH);
+use GitFollow::Stdlib::NumberUtils qw(is_numeric);
 
 our @EXPORT_OK = qw(
 	parse_opts

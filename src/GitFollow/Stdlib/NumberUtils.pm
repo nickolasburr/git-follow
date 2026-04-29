@@ -20,3 +20,5 @@ sub is_numeric {
 	return (defined $num)
 	    ? ($num =~ /^\d+$/ ? 1 : 0) : 0;
 }
+
+1;
