@@ -15,7 +15,7 @@ MDLDIR="/usr/local/opt/git-follow/src"
 SRCDIR="src"
 
 SED="/usr/bin/sed"
-SEDOPTS="-i ''"
+SEDOPTS="-i''"
 SEDEXPR="s@$MDLDIR@$SRCDIR@g"
 
 # Update 'use lib' directive to 'src' for testing purposes.
